@@ -8,38 +8,69 @@ refereced:
     https://www.analyticsvidhya.com/blog/2019/01/monte-carlo-tree-search-introduction-algorithm-deepmind-alphago/
     https://towardsdatascience.com/monte-carlo-tree-search-an-introduction-503d8c04e168
 '''
+'''
+todo: 
+    URGENT: ds
 
-board[19][19] #int
-log[]
+'''
 
-
-def calcUCB():
-    #todo
-
-
-def expansion():
-    #todo
+class node:
+    def __init__(self):
+        pass
 
 
-def backprop():
-    #todo
+
+class mcts: 
+    def __init__(self):
+        board = [19][19] #int
+        pass
+        #todo
+
+    #1 
+    def calcUCB(self, node, userinput):
+        pass
+        #todo
+
+    #1
+    def expansion(self):
+        pass
+        #todo
+
+    #3
+    def backprop(self):
+        pass
+        #todo
+
+    #2
+    def rollout(self):
+        pass
+        #todo
+
+    #5
+    def select(self):
+        pass
+        #todo
+
+    #2 input: board, output: available moves
+    def findMoves(self):
+        pass
+        #todo
 
 
-def rollout():
-    #todo
+
+class checker:
+    log=[] #for undo 
+    def chkTime(self):
+        pass
+        #todo
 
 
-def select():
-    #todo
+    #input: board, output: bool, true for win
+    def chkVic(self):
+        pass
+        #todo
 
 
-def chkTime():
-    #todo
-
-
-def chkVic():
-    #todo
-
-
-def undo():
-    #todo
+    def undo(self):
+        pass
+        #todo later`
