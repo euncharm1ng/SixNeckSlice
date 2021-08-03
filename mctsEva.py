@@ -10,14 +10,15 @@ refereced:
 '''
 '''
 todo: 
-    URGENT: ds
     decide t according to consequences
 
 '''
 from numpy import log as ln
+import time 
 import numpy
 import math, copy
 import random
+
 
 movRange = 2
 BLACK = 1
@@ -32,14 +33,14 @@ class move:
         return "x: " + str(self.x) + " y: " + str(self.y)
 
 class node:
-    def __init__(self, parent,aicolor):#, mov1, mov2):
+    def __init__(self, parent,present_color):#, mov1, mov2):
         self.t = 0 # value 
         self.n = 0 # number of times visited
         self.ucb = float('inf')
         self.name = ""
         self.children = []
         self.parent = parent
-        self.color = aicolor
+        self.color = present_color
         #self.mov1 = mov1
         #self.mov2 = mov2
         if(parent == "root"):
@@ -80,14 +81,30 @@ class mcts:
         pass
         #todo
 
+    # the biggest method for run game
+    # input: board status, output: coor
+    # gui.py calls this method to calculate the ai's move
+    def runGame(self):
+        pass
+
+
+
     #1 no need return, update node.ucb
     def calcUCB(self, node):
         node.ucb = node.t + 2*(math.sqrt(ln(node.parent.n)/node.n))
         #todo
 
     #1
-    def expansion(self):
-        pass
+    def expansion(self,currnode):
+        self.findMoves(currnode)
+        color = WHITE if currnode.color == BLACK else BLACK
+        for mov in currnode.availMov :
+            print(mov)
+            # tempnode = copy.deepcopy(currnode)
+            # tempnode.color = color
+            # tempnode.parent = currnode
+            # self.placeStones(mov, tempnode.color,tempnode)
+            # currnode.addC(tempnode)
         #todo
 
     #3
@@ -96,31 +113,52 @@ class mcts:
         #todo
 
     #5
-    def select(self):
+    def select(self,currnode):
+        # if currnode.child is empty :
+        #     expansion()
+        #     each child rollout
+        #     backprop()
+        # select node which has biggest value of ucb
+
         pass
         #todo
 
     #2 
     # input : current node, Next turn / output : win? lose? tie?
     def rollout(self, currNode, isAiTurn):
+        startTime = time.process_time()
         aicolor = currNode.color
         usercolor = WHITE if aicolor == BLACK else BLACK
         turn = aicolor if isAiTurn == True else usercolor
         tempnode = copy.deepcopy(currNode)
+        count = 0
+        
         while self.isFull(tempnode) :
+            whileTime = time.process_time()
+            count +=1
             tempnode.availMov = []
             self.findMoves(tempnode)
             mov1, mov2 = numpy.random.choice(tempnode.availMov, 2, replace = False)
             turn = usercolor if turn == aicolor else aicolor
-            self.placeStones(mov1, mov2, turn, tempnode)
-            # victory, winnerColor = self.chkVic(tempnode)
-            # if victory :
+            self.placeStones(mov1,turn, tempnode)
+            self.placeStones(mov2,turn, tempnode)
+            victory, winnerColor = self.chkVic(tempnode)
+            if victory :
+                print(tempnode.board)
+                print("victory! winner is " + str(winnerColor) + " count : " + str(count))
+                #end = time.time()
+                elapsedTime = time.process_time() - startTime
+                whileElapsedTime = time.process_time() - whileTime
+                print(elapsedTime)
+                print(whileElapsedTime)
+                return
             #     currNode.t = 20 if winnerColor == aicolor else 0
             #     return
         print(tempnode.board)
 
         currNode.t = 10
 
+    
         #todo find available moves -> make random move for ai -> check victory -> findMoves -> make random move for user -> check victory -> find -> .... -> somebody won -> update current node's t value 
 
         #findMoves(tempnode)
@@ -176,7 +214,6 @@ class mcts:
     #input: node, output: bool, true for a winner
     #return bool , tag 
     def chkVic(self, node):
-        return False, 0
         tag = 0
         cnt = 0
         #dir1 horizontal
@@ -186,8 +223,6 @@ class mcts:
             while j < 19:
                 if node.board[i][j]:
                     tag = node.board[i][j]
-                    cnt = 1
-                    j = j + 1
                     while j < 19 and tag == node.board[i][j]:
                         cnt += 1
                         j = j + 1
@@ -195,7 +230,7 @@ class mcts:
                     if cnt > 5:
                         return True, tag
                     else:
-                        cnt = 1
+                        cnt = 0
                         j -= 1
                 j+=1
             i+=1
@@ -205,10 +240,7 @@ class mcts:
             i = 0
             while i < 19:
                 if node.board[i][j]:
-                    #print(i)
                     tag = node.board[i][j]
-                    cnt = 1
-                    i = i + 1
                     while i < 19 and tag == node.board[i][j]:
                         cnt += 1
                         i = i + 1
@@ -216,12 +248,86 @@ class mcts:
                     if cnt > 5:
                         return True, tag
                     else:
-                        cnt = 1
+                        cnt = 0
                         i -= 1
                 i+=1
             j+=1
-        #dir3 diag top right to bot left
-        #dir4 diag top left to bot right
+            
+        #dir3 diag top left to bot right
+        for i in range(14):
+            j = 0 
+            while i < 19:
+                #print("loop var i : "+ str(i))
+                if node.board[i][j]:
+                    tag = node.board[i][j]
+                    while i < 19 and tag == node.board[i][j]:
+                        cnt += 1
+                        i += 1
+                        j += 1
+                    #print("outside while, cnt = " + str(cnt) + " " + str(i) + " " + str(j))
+                    if cnt > 5:
+                        return True, tag
+                    else:
+                        cnt = 0
+                        continue
+                j += 1
+                i += 1
+
+        for j in range (1, 14):
+            i = 0
+            while j < 19:
+                if node.board[i][j]:
+                    tag = node.board[i][j]
+                    while j < 19 and tag == node.board[i][j]:
+                        cnt += 1
+                        i += 1
+                        j += 1
+                    #print("outside while, cnt = " + str(cnt) + " " + str(i) + " " + str(j))
+                    if cnt > 5:
+                        return True, tag
+                    else: 
+                        cnt = 0
+                        continue
+                j += 1
+                i += 1
+
+        #dir4 diag top right to bot left
+        for j in range (5, 19):
+            i = 0 
+            while j > -1:
+                if node.board[i][j]:
+                    tag = node.board[i][j]
+                    while j > -1 and tag == node.board[i][j]: 
+                        cnt += 1
+                        i += 1
+                        j -= 1
+                    #print("outside while, cnt = " + str(cnt) + " " + str(i) + " " + str(j))
+                    if cnt > 5:
+                        return True, tag
+                    else:
+                        cnt = 0
+                        continue
+                i += 1
+                j -= 1
+
+        for i in range (1, 14):
+            j = 0
+            while i < 19:
+                if node.board[i][j]:
+                    tag = node.board[i][j]
+                    while i < 19 and tag == node.board[i][j]:
+                        cnt += 1
+                        i += 1
+                        j -= 1
+                    #print("outside while, cnt = " + str(cnt) + " " + str(i) + " " + str(j))
+                    if cnt > 5:
+                        return True, tag
+                    else: 
+                        cnt = 0
+                        continue
+                i += 1
+                j -= 1
+
         return False, 0
 
 
@@ -229,16 +335,10 @@ class mcts:
         pass
         #todo later
 
-    #input two stones, color, current node / output place stones on currnode.board
-    def placeStones(self,stone1,stone2,color,currnode) :
-        currnode.board[stone1.x][stone1.y] = color
-        currnode.board[stone2.x][stone2.y] = color
+    #input stone's coor, color, current node / output place stones on currnode.board
+    def placeStones(self, stone, color, currnode) :
+        currnode.board[stone.x][stone.y] = color
 
     #return true is board is not full, false if there is no space for moves
     def isFull(self, checknode):
-        count = 0
-        for i in range(19) :
-            for j in range(19) :
-                if checknode.board[i][j] != 0 :
-                    count+=1
-        return False if count == 361 else True
+        return 0 in checknode.board
