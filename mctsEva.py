@@ -10,20 +10,11 @@ refereced:
 '''
 '''
 todo: 
-<<<<<<< HEAD
-    URGENT: ds
-=======
->>>>>>> 5f9da478c43e8725c08913530de27d8df69d9c25
     decide t according to consequences
 
 '''
 from numpy import log as ln
-<<<<<<< HEAD
-import numpy
-import math, copy
 
-movRange = 2
-=======
 import time 
 import numpy
 import math, copy
@@ -33,7 +24,6 @@ import random
 movRange = 2
 BLACK = 1
 WHITE = 2
->>>>>>> 5f9da478c43e8725c08913530de27d8df69d9c25
 
 class move:
     def __init__(self, x, y):
@@ -44,30 +34,20 @@ class move:
         return "x: " + str(self.x) + " y: " + str(self.y)
 
 class node:
-<<<<<<< HEAD
-    def __init__(self, parent):#, mov1, mov2):
-=======
     def __init__(self, parent,present_color):#, mov1, mov2):
->>>>>>> 5f9da478c43e8725c08913530de27d8df69d9c25
         self.t = 0 # value 
         self.n = 0 # number of times visited
         self.ucb = float('inf')
         self.name = ""
         self.children = []
         self.parent = parent
-<<<<<<< HEAD
-=======
         self.color = present_color
->>>>>>> 5f9da478c43e8725c08913530de27d8df69d9c25
         #self.mov1 = mov1
         #self.mov2 = mov2
         if(parent == "root"):
             self.board = numpy.zeros((19,19), dtype = int)
         else: 
-<<<<<<< HEAD
-=======
             parent.addC(self)
->>>>>>> 5f9da478c43e8725c08913530de27d8df69d9c25
             self.board = copy.deepcopy(parent.board)
         self.availMov = []
 
@@ -83,8 +63,6 @@ class node:
 
     def __str__(self):
         return "ucb value is : " + str(self.ucb) #self.name #
-<<<<<<< HEAD
-=======
 
     def printBoard(self):
         for i in range(19):
@@ -95,7 +73,6 @@ class node:
     def printAvailMov(self):
         for mov in self.availMov:
             print(mov)
->>>>>>> 5f9da478c43e8725c08913530de27d8df69d9c25
 
 
 
@@ -105,17 +82,12 @@ class mcts:
         pass
         #todo
 
-<<<<<<< HEAD
-=======
     # the biggest method for run game
     # input: board status, output: coor
     # gui.py calls this method to calculate the ai's move
     def runGame(self):
         pass
 
-
-
->>>>>>> 5f9da478c43e8725c08913530de27d8df69d9c25
     #1 no need return, update node.ucb
     def calcUCB(self, node):
         node.ucb = node.t + 2*(math.sqrt(ln(node.parent.n)/node.n))
@@ -139,33 +111,6 @@ class mcts:
         pass
         #todo
 
-<<<<<<< HEAD
-    #2 
-    def rollout(self, currNode):
-
-       ''' tempnode = copy.deepcopy(self)
-
-		while True :
-			self.findMoves(tempnode)
-			#choose randome next move and move 2 stones
-			self.availMov
-			if self.chkVic(tempnode):
-				break
-
-		return self.t = 20
-
-        pass'''
-        #todo find available moves -> make random move for ai -> check victory -> findMoves -> make random move for user -> check victory -> find -> .... -> somebody won -> update current node's t value 
-
-        #findMoves(tempnode)
-        #random 2 moves = (tempnode.availMov)
-        #tempnode.board[random 2 moves] = 1 if it's ai's turn, 2 if it's user's turn
-        #check victory
-        #findMoves
-
-
-=======
->>>>>>> 5f9da478c43e8725c08913530de27d8df69d9c25
     #5
     def select(self,currnode):
         # if currnode.child is empty :
@@ -173,53 +118,6 @@ class mcts:
         #     each child rollout
         #     backprop()
         # select node which has biggest value of ucb
-
-<<<<<<< HEAD
-    #2 input: board, output: available moves
-    def findMoves(self, node):
-        moveBoard = numpy.ones((19,19), dtype = int)
-        for i in range(19):
-            for j in range(19):
-                if node.board[i][j] :
-                    moveBoard[i][j] = 0
-                    for k in range(self.ifSmaller(i-movRange), self.ifBigger(i+movRange+1)):
-                        for l in range(self.ifSmaller(j-movRange), self.ifBigger(j+movRange+1)):
-                            moveBoard[k][l] *= 2
-
-        moveBoard[moveBoard < 2] = 0
-
-        for i in range(19):
-            for j in range(19):
-                print(str(moveBoard[i][j]) + " ", end = "")
-                if moveBoard[i][j]:
-                    node.availMov.append(move(i,j))
-            print("")
-        
-    def printAvailM(self, node):
-        for mov in node.availMov:
-            print(mov)
-
-
-    def ifBigger(self, num):
-        if num > 19 :
-            return 19
-        else :
-            return num
-
-
-    def ifSmaller(self, num):
-        if num < 0 :
-            return 0
-        else :
-            return num
-        
-
-    def printB(self, node):
-        for i in range(19):
-            for j in range(19):
-                print(str(node.board[i][j]) + " ", end = "")
-            print("")
-=======
         pass
         #todo
 
@@ -304,7 +202,7 @@ class mcts:
         else :
             return num
         
->>>>>>> 5f9da478c43e8725c08913530de27d8df69d9c25
+
 
 
     def chkTime(self):
@@ -313,10 +211,6 @@ class mcts:
 
 
     #input: node, output: bool, true for a winner
-<<<<<<< HEAD
-=======
-    #return bool , tag 
->>>>>>> 5f9da478c43e8725c08913530de27d8df69d9c25
     def chkVic(self, node):
         tag = 0
         cnt = 0
@@ -356,11 +250,7 @@ class mcts:
                         i -= 1
                 i+=1
             j+=1
-<<<<<<< HEAD
-        #return False, 0
-=======
-            
->>>>>>> 5f9da478c43e8725c08913530de27d8df69d9c25
+
         #dir3 diag top left to bot right
         for i in range(14):
             j = 0 
@@ -372,11 +262,7 @@ class mcts:
                         cnt += 1
                         i += 1
                         j += 1
-<<<<<<< HEAD
-                    print("outside while, cnt = " + str(cnt) + " " + str(i) + " " + str(j))
-=======
                     #print("outside while, cnt = " + str(cnt) + " " + str(i) + " " + str(j))
->>>>>>> 5f9da478c43e8725c08913530de27d8df69d9c25
                     if cnt > 5:
                         return True, tag
                     else:
@@ -394,11 +280,7 @@ class mcts:
                         cnt += 1
                         i += 1
                         j += 1
-<<<<<<< HEAD
-                    print("outside while, cnt = " + str(cnt) + " " + str(i) + " " + str(j))
-=======
                     #print("outside while, cnt = " + str(cnt) + " " + str(i) + " " + str(j))
->>>>>>> 5f9da478c43e8725c08913530de27d8df69d9c25
                     if cnt > 5:
                         return True, tag
                     else: 
@@ -417,11 +299,9 @@ class mcts:
                         cnt += 1
                         i += 1
                         j -= 1
-<<<<<<< HEAD
-                    print("outside while, cnt = " + str(cnt) + " " + str(i) + " " + str(j))
-=======
+
                     #print("outside while, cnt = " + str(cnt) + " " + str(i) + " " + str(j))
->>>>>>> 5f9da478c43e8725c08913530de27d8df69d9c25
+
                     if cnt > 5:
                         return True, tag
                     else:
@@ -439,11 +319,9 @@ class mcts:
                         cnt += 1
                         i += 1
                         j -= 1
-<<<<<<< HEAD
-                    print("outside while, cnt = " + str(cnt) + " " + str(i) + " " + str(j))
-=======
+
                     #print("outside while, cnt = " + str(cnt) + " " + str(i) + " " + str(j))
->>>>>>> 5f9da478c43e8725c08913530de27d8df69d9c25
+
                     if cnt > 5:
                         return True, tag
                     else: 
@@ -457,10 +335,6 @@ class mcts:
 
     def undo(self):
         pass
-<<<<<<< HEAD
-        #todo later`
-
-=======
         #todo later
 
     #input stone's coor, color, current node / output place stones on currnode.board
@@ -470,4 +344,4 @@ class mcts:
     #return true is board is not full, false if there is no space for moves
     def isFull(self, checknode):
         return 0 in checknode.board
->>>>>>> 5f9da478c43e8725c08913530de27d8df69d9c25
+
