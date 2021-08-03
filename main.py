@@ -1,20 +1,20 @@
-"""
-hello world from me!
-"""
 import gui, go, goban, mctsEva
 
-a = mctsEva.node("root")
-b = mctsEva.node(a)
-c = mctsEva.node(a)
+BLACK = 1
+WHITE = 2
+if __name__ == '__main__':
+    aiColor = BLACK
+    userColor = WHITE
+    ai = mctsEva.mcts()
 
-print("start")
+    a = mctsEva.node("root",BLACK)
+    b = mctsEva.node(a,BLACK)
+    c = mctsEva.node(a,BLACK)
+    b.board[10][10] = BLACK
+    ai.rollout(b, False)
+    print(b.t)
+    
 
-a.addC(b)
-a.addC(c)
-b.setName("im bc")
-c.setName("im c")
-a.printC()
-
-print("end")
-
-
+    # (0,1) x
+    # o x
+    # o o
