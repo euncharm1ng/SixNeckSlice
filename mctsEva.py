@@ -15,8 +15,26 @@ todo:
 '''
 
 class node:
-    def __init__(self):
-        pass
+    def __init__(self, parent):
+        self.t = 0
+        self.n = 0
+        self.ucb = 0
+        self.name = ""
+        self.children = []
+        self.parent = parent
+
+    def addC(self, child):
+        self.children.append(child)
+
+    def printC(self):
+        for child in self.children:
+            print(child)
+
+    def setName(self, name):
+        self.name = name
+
+    def __str__(self):
+        return self.name #"ucb value is : " + str(self.ucb)
 
 
 
