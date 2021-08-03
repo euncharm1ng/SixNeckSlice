@@ -1,8 +1,7 @@
-"""
-hello world from me!
-"""
 import gui, go, goban, mctsEva
+import time
 
+<<<<<<< HEAD
 print("start")
 
 a = mctsEva.node("root")
@@ -130,3 +129,27 @@ print("end")
 
 
 
+=======
+BLACK = 1
+WHITE = 2
+if __name__ == '__main__':
+    aiColor = BLACK
+    userColor = WHITE
+    ai = mctsEva.mcts()
+
+    a = mctsEva.node("root",BLACK)
+    b = mctsEva.node(a,BLACK)
+    b.board[10][10] = BLACK
+    ai.rollout(b, True)
+    # a.board[10][10] = BLACK
+    # ai.expansion(a)
+    # for i in range(5) :
+    #     print(a.children[i].board)
+
+    
+
+
+    # (0,1) x
+    # o x
+    # o o
+>>>>>>> 5f9da478c43e8725c08913530de27d8df69d9c25
