@@ -195,13 +195,30 @@ void Mcts::chkTime(){
 
 }
 
-void Mcts::chkVic(){
-    // int color = 0, cnt = 0;
-    // for(int i = 0; i < 19; i++){
-    //     for(int j = 0; j < 19; j++){
-    //         if node->
-    //     }
-    // }
+void Mcts::chkVic(Node& node){
+    int color = 0, cnt = 0;
+    // dir1 horizontal
+    for(int i = 0; i < 19; i++){
+        for(int j = 0; j < 19; j++){
+            if (node.board[i][j]){
+                color = node.board[i][j];
+                while(j < 19 and color == node.board[i][j]){
+                    cnt += 1
+                    j++;
+                }
+                printf("outside while, cnt = %d, j = %d\n", cnt, j);
+                if(cnt > 5) return color;
+                else{
+                    cnt = 0; 
+                    j--;
+                }
+            }
+        }
+    } // enf of dir1
+
+    // dir2 vertical
+    // dir3 diag top left to bot right
+    // dir4 diag top right to bot left
 }
 void Mcts::placeStones(const Move stone, int color, Node& checknode){
     checknode.board[stone.x][stone.y] = color;
