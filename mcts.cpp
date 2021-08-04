@@ -2,4 +2,29 @@
 
 using namespace std;
 
-//classes
+typedef struct move{
+    int x, y;
+}move;
+
+class node{
+    private:
+
+    public:
+    void addC(){
+
+    }
+    void printC(){
+
+    }
+    void setName(){
+        
+    }
+};
+
+class mcts
+{
+    private:
+
+    public:
+};
+
