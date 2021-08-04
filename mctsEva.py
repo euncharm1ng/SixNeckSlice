@@ -124,16 +124,12 @@ class mcts:
     #2 
     # input : current node, Next turn / output : win? lose? tie?
     def rollout(self, currNode, isAiTurn):
-        startTime = time.process_time()
         aicolor = currNode.color
         usercolor = WHITE if aicolor == BLACK else BLACK
         turn = aicolor if isAiTurn == True else usercolor
         tempnode = copy.deepcopy(currNode)
-        count = 0
-        beforeWhileTime = time.process_time()
+        
         while self.isFull(tempnode) :
-            #whileTime = time.process_time()
-            count +=1
             tempnode.availMov = []
             self.findMoves(tempnode)
             mov1, mov2 = numpy.random.choice(tempnode.availMov, 2, replace = False)
@@ -142,19 +138,9 @@ class mcts:
             self.placeStones(mov2,turn, tempnode)
             victory, winnerColor = self.chkVic(tempnode)
             if victory :
-                elapsedTime = time.process_time() - startTime
-                #whileElapsedTime = time.process_time() - whileTime
-                beforeWhileTime = time.process_time() - beforeWhileTime
-                print(tempnode.board)
-                print("victory! winner is " + str(winnerColor) + " count : " + str(count))
-                
-                print(elapsedTime)
-                #print(whileElapsedTime)
-                print(beforeWhileTime)
                 return
             #     currNode.t = 20 if winnerColor == aicolor else 0
             #     return
-        print(tempnode.board)
 
         currNode.t = 10
 

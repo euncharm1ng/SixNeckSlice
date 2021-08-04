@@ -31,8 +31,10 @@ class Node{
         vector<Move> availMov;
         Node* parent;
         int** board;//[19][19];// = {0, };
+
         char name[10];
         Node(char const *name);
+        Node(int curr_color, Node* myparent);
         void printName();
         void addC(Node* child);
         void printC();
@@ -41,8 +43,10 @@ class Node{
         void printAvailMov();
         float getUCB();
         void setUCB(float num);
+
         void appendAvailMov(Move mov);
         void rmDupInAvailMov();
+
         void freeNode();
 };
 
@@ -55,16 +59,18 @@ class Mcts
     Mcts();
     void runGame();
     void calcUCB(Node* node);
-    void expansion();
+    void expansion(Node* currnode);
     void backprop();
     void select();
-    void rollout();
+
     void findMoves(Node& node);
+
+    int rollout(Node* currnode);
     int ifBigger(int num);
     int ifSmaller(int num);
     void chkTime();
-    void chkVic();
-    void placeStones(const Move stone, int color, Node& checknode);
-    void isFull(Node& checknode);
+    int chkVic(Node* currnode);
+    void placeStones(Move stone, int color, Node* checknode);
+    bool isNotFull(Node* checknode);
 };
 
