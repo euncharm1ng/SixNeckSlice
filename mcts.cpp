@@ -11,6 +11,7 @@
 
 using namespace std;
 
+#define DEBUG 0
 
 
 bool comp(Move mov1, Move mov2){
@@ -78,9 +79,15 @@ void Node::addC(Node* child){
     this->children.push_back(child);
 }
 void Node::printC(){
+    #if DEBUG
+    printf("--print child\n");
+    #endif
     for(auto& c : this->children){
-        printf("print ccccc : %s\n", c->name);
+        printf(" %s\n", c->name);
     }
+    #if DEBUG
+    printf("--end of print child\n");
+    #endif
 }
 
 void Node::printUCB(){
@@ -88,22 +95,32 @@ void Node::printUCB(){
 }
 
 void Node::printBoard(){
+    #if DEBUG
+    printf("print board\n");
+    #endif
     for(int i = 0; i < 19; i++){
         for(int j = 0; j < 19; j++){
             printf("%d ",this->board[i][j]);
         }
         printf("\n");
     }
+    #if DEBUG
     printf("end of print board\n");
+    #endif
 }
 
 void Node::printAvailMov(){
-    printf("print Avail Mov");
+    #if DEBUG
+    printf("==print Avail Mov\n");
+    #endif
     int i =0;
     for(auto& m : this->availMov){
         if(i++ % 5 == 0) printf("\n");
         printf("x: %3d, y: %3d \t", m.x, m.y);
     }
+    #if DEBUG
+    printf("==end of print Avail Mov\n");
+    #endif
 }
 
 float Node::getUCB(){
@@ -132,7 +149,7 @@ void Node::rmDupInAvailMov(){
 
 //-----class Mcts-----//
 Mcts::Mcts(){
-    printf("hello world\n");
+    printf("Mcts constructor\n");
 }
 void Mcts::runGame(){
     printf("in rungame\n");
@@ -183,7 +200,9 @@ void Mcts::findMoves(Node& node){
     }
     for(int i = 0; i < 19; i++){
         for(int j = 0; j < 19; j++){
+            #if DEBUG
             printf("%2d ", tempBoard[i][j]);
+            #endif
             if(tempBoard[i][j] > 1){
                 Move tempMove;
                 tempMove.x = i;
@@ -191,9 +210,13 @@ void Mcts::findMoves(Node& node){
                 node.appendAvailMov(tempMove);
             }
         }
+        #if DEBUG
         printf("\n");
+        #endif
     }
+    #if DEBUG
     node.printAvailMov();
+    #endif
 }
 
 
@@ -202,15 +225,15 @@ int Mcts::rollout(Node* currnode){
     int aicolor = currnode->color;
     int usercolor = (aicolor == BLACK) ? WHITE : BLACK;
     int turn=0;
-    Node tempnode = Node("temp");  
+    Node tempnode = Node(5, NULL);  
     while( this->isNotFull(&tempnode) ) {
         tempnode.availMov.clear();
-        this->findMoves(&tempnode);
+        this->findMoves(tempnode);
         srand(time(NULL));
         turn = (aicolor == BLACK) ? WHITE : BLACK;
         this->placeStones( currnode->availMov[rand()%currnode->availMov.size()] ,turn,&tempnode);
         this->placeStones( currnode->availMov[rand()%currnode->availMov.size()] ,turn,&tempnode);
-        if(chkVic(&tempnode)==aicolor) return 20;
+        if(chkVic(tempnode)==aicolor) return 20;
         else return 5;
     }
     return 10;
@@ -232,19 +255,28 @@ void Mcts::chkTime(){
 }
 
 
-void Mcts::chkVic(Node& node){
+int Mcts::chkVic(Node& node){
     int color = 0, cnt = 0;
+    #if DEBUG
+    printf("dir1---------\n");
+    #endif
     // dir1 horizontal
     for(int i = 0; i < 19; i++){
         for(int j = 0; j < 19; j++){
             if (node.board[i][j]){
                 color = node.board[i][j];
-                while(j < 19 and color == node.board[i][j]){
-                    cnt += 1
+                while(j < 19 && color == node.board[i][j]){
+                    cnt++;
                     j++;
                 }
-                printf("outside while, cnt = %d, j = %d\n", cnt, j);
-                if(cnt > 5) return color;
+                #if DEBUG
+                printf("outside while, cnt = %d, i = %d, j = %d\n", cnt, i, j);
+                #endif
+                if(cnt > 5){ 
+                    #if DEBUG 
+                    printf("found winner\n"); 
+                    #endif 
+                    return color;}
                 else{
                     cnt = 0; 
                     j--;
@@ -252,12 +284,155 @@ void Mcts::chkVic(Node& node){
             }
         }
     } // enf of dir1
-
+    #if DEBUG
+    printf("dir2---------\n");
+    #endif
     // dir2 vertical
+    for(int j = 0; j< 19; j++){
+        for(int i =0; i < 19; i++){
+            if(node.board[i][j]){
+                color = node.board[i][j];
+                while(i<19 && color == node.board[i][j]){
+                    cnt++;
+                    i++;
+                }
+                #if DEBUG
+                printf("outside while, cnt = %d, i = %d, j = %d\n", cnt, i, j);
+                #endif
+                if(cnt > 5){ 
+                    #if DEBUG 
+                    printf("found winner\n"); 
+                    #endif 
+                    return color;}
+                else{
+                    cnt = 0;
+                    i--;
+                }
+            }
+        }
+    }// end of dir2
+    #if DEBUG
+    printf("dir3---------\n");
+    #endif
     // dir3 diag top left to bot right
-    // dir4 diag top right to bot left
+    for(int k = 0; k < 14; k++){
+        int i = k, j = 0;
+        while(i < 19){
+            if(node.board[i][j]){
+                color = node.board[i][j];
+                while(i < 19 && color == node.board[i][j]){
+                    cnt++;
+                    i++;
+                    j++;
+                }
+            #if DEBUG
+                printf("outside while, cnt = %d, i = %d, j = %d\n", cnt, i, j);
+            #endif
+                if(cnt > 5){ 
+                    #if DEBUG 
+                    printf("found winner\n"); 
+                    #endif 
+                    return color;}
+                else{
+                    cnt = 0;
+                    continue;
+                }
+            }
+            j++;
+            i++;
+        }
+    }// end of dir3 pt1
 
-}
+    for(int k = 1; k < 14; k++){
+        int j = k, i = 0;
+        while(j < 19){
+            if(node.board[i][j]){
+                color = node.board[i][j];
+                while(j < 19 && color == node.board[i][j]){
+                    cnt++;
+                    i++;
+                    j++;
+                }
+                #if DEBUG
+                printf("outside while, cnt = %d, i = %d, j = %d\n", cnt, i, j);
+                #endif
+                if(cnt > 5){ 
+                    #if DEBUG 
+                    printf("found winner\n"); 
+                    #endif 
+                    return color;}
+                else{
+                    cnt = 0;
+                    continue;
+                }
+            }
+            j++;
+            i++;
+        }
+    }// end of dir3 pt2
+    #if DEBUG
+    printf("dir4---------\n");
+    #endif
+    // dir4 diag top right to bot left
+    for(int k = 5; k < 19; k++){
+        int j = k, i = 0;
+        while(j > -1){
+            if(node.board[i][j]){
+                color = node.board[i][j];
+                while(j > -1 && color == node.board[i][j]){
+                    cnt++;
+                    i++;
+                    j--;
+                }
+                #if DEBUG
+                printf("outside while, cnt = %d, i = %d, j = %d\n", cnt, i, j);
+                #endif
+                if(cnt > 5){ 
+                    #if DEBUG 
+                    printf("found winner\n"); 
+                    #endif 
+                    return color;}
+                else{
+                    cnt = 0;
+                    continue;
+                }
+            }
+            i++;
+            j--;
+        }
+    }// end of dir4 pt1
+    for(int k =1; k < 14; k++){
+        int i = k, j = 18;
+        while(i < 19){
+            if(node.board[i][j]){
+                color = node.board[i][j];
+                while(i < 19 && color == node.board[i][j]){
+                    cnt++;
+                    i++;
+                    j--;
+                }
+                #if DEBUG
+                printf("outside while, cnt = %d, i = %d, j = %d\n", cnt, i, j);
+                #endif
+                if(cnt > 5){ 
+                    #if DEBUG 
+                    printf("found winner\n"); 
+                    #endif 
+                    return color;}
+                else{
+                    cnt = 0;
+                    continue;
+                }
+            }
+            i++;
+            j--;
+        }
+    }
+    #if DEBUG
+    printf("end of chkvic()\n");
+    #endif
+    return 0;
+}// end of chkVic()
 void Mcts::placeStones(const Move stone, int color, Node* checknode){
     checknode->board[stone.x][stone.y] = color;
 }

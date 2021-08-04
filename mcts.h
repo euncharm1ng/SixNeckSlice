@@ -69,7 +69,7 @@ class Mcts
     int ifBigger(int num);
     int ifSmaller(int num);
     void chkTime();
-    int chkVic(Node* currnode);
+    int chkVic(Node& currnode);
     void placeStones(Move stone, int color, Node* checknode);
     bool isNotFull(Node* checknode);
 };
