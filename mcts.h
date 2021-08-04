@@ -1,6 +1,5 @@
-#include <stdlib.h>
-#include <algorithm> //copy(&array[][],&array[][]+lengh,&array_copy[][])
-//color,  usercolor, aicolor
+#include <stdlib.h> 
+#include <algorithm> 
 #include <vector>
 #include <string>
 #include <stdio.h>
@@ -15,27 +14,18 @@ typedef struct move{
 bool comp(Move mov1, Move mov2);
 
 class Node{
-    private:
-        // int t;
-        // int n;
-        // float ucb;
-        // int color;
-        // vector<Node*> children;
-        // vector<Move> availMov;
     public:
-        int t;
-        int n;
+        int t, n, color;
         float ucb;
-        int color;
         vector<Node*> children;
         vector<Move> availMov;
         Node* parent;
-        int** board;//[19][19];// = {0, };
+        int** board;
+        Move mov1, mov2;
 
-        char name[10];
-        Node(char const *name);
-        Node(int curr_color, Node* myparent);
-        void printName();
+        Node(int curr_color, Node* myparent);//, Move mov1, Move mov2);
+        Node(int curr_color);
+
         void addC(Node* child);
         void printC();
         void printUCB();
@@ -43,34 +33,30 @@ class Node{
         void printAvailMov();
         float getUCB();
         void setUCB(float num);
-
         void appendAvailMov(Move mov);
-        void rmDupInAvailMov();
-
         void freeNode();
 };
 
 
-class Mcts
-{
-    private:
 
+class Mcts{
     public:
     Mcts();
+
     void runGame();
     void calcUCB(Node* node);
-    void expansion(Node* currnode);
+    void expansion(Node& currnode);
     void backprop();
     void select();
 
     void findMoves(Node& node);
 
-    int rollout(Node* currnode);
+    int rollout(Node& currnode);
     int ifBigger(int num);
     int ifSmaller(int num);
     void chkTime();
     int chkVic(Node& currnode);
-    void placeStones(Move stone, int color, Node* checknode);
-    bool isNotFull(Node* checknode);
+    void placeStones(const Move stone, int color, Node& checknode);
+    bool isNotFull(Node& checknode);
 };
 
