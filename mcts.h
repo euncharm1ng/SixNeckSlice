@@ -30,7 +30,7 @@ class Node{
         vector<Node*> children;
         vector<Move> availMov;
         Node* parent;
-        int board[19][19] = {0, };
+        int** board;//[19][19];// = {0, };
         char name[10];
         Node(char const *name);
         void printName();
@@ -42,6 +42,8 @@ class Node{
         float getUCB();
         void setUCB(float num);
         void appendAvailMov(Move mov);
+        void rmDupInAvailMov();
+        void freeNode();
 };
 
 

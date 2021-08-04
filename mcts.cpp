@@ -1,3 +1,4 @@
+#include "mcts.h"
 #include <stdlib.h>
 #include <algorithm> //copy(&array[][],&array[][]+lengh,&array_copy[][])
 //color,  usercolor, aicolor
@@ -6,10 +7,28 @@
 #include <stdio.h>
 #include <cmath>
 #include <string.h>
-#include "mcts.h"
+
 using namespace std;
 
 #define MOVRANGE 2
+#define BOARDSIZE 19
+
+
+bool comp(Move mov1, Move mov2){
+    if(mov1.x < mov2.x) return true;
+    else if(mov1.y < mov2.y) return true;
+    else return false;
+}
+
+bool operator == (const Move &m1, const Move &m2)
+{
+   if(m1.x == m2.x && m1.y == m2.y)
+     return true;
+   else
+     return false;
+}
+
+
 
 //-----class Node-----//
 Node::Node(char const *name){
@@ -20,6 +39,23 @@ Node::Node(char const *name){
     vector<Node*> children;
     vector<Move> availMov;
     strcpy(this->name, name);
+    this->board = (int**)malloc(sizeof(int*) * BOARDSIZE);
+    for(int i = 0; i< BOARDSIZE; i++){
+        this->board[i] = (int*)malloc(sizeof(int) * BOARDSIZE);
+    }
+    // fill( &(this->board[0][0]), &(this->board[0][0]) + sizeof(this->board), 0);
+    for(int i =0; i< BOARDSIZE; i++){
+        for(int j =0; j< BOARDSIZE; j++){
+            this->board[i][j] = 0;
+        }
+    }
+}
+
+void Node::freeNode(){
+    for(int i = 0; i < BOARDSIZE; ++i) {
+        free(this->board[i]);
+    }
+    free(this->board);
 }
 
 void Node::printName(){
@@ -33,9 +69,6 @@ void Node::printC(){
     for(auto& c : this->children){
         printf("print ccccc : %s\n", c->name);
     }
-    // for(int i =0; i < this->children.length(); i++){
-    //     printf("%d %s\n", i, this->children[i].name);
-    // }
 }
 
 void Node::printUCB(){
@@ -53,10 +86,11 @@ void Node::printBoard(){
 }
 
 void Node::printAvailMov(){
-    printf("indise print avail mov\n");
-
+    printf("print Avail Mov");
+    int i =0;
     for(auto& m : this->availMov){
-        printf("x: %d, y: %d", m.x, m.y);
+        if(i++ % 5 == 0) printf("\n");
+        printf("x: %3d, y: %3d \t", m.x, m.y);
     }
 }
 
@@ -69,15 +103,19 @@ void Node::setUCB(float num){
 }
 
 void Node::appendAvailMov(Move mov){
+    this->availMov.push_back(mov);
+}
+
+void Node::rmDupInAvailMov(){
     sort(this->availMov.begin(), this->availMov.end(), comp);
+    // if (binary_search(this->availMov.begin(), this->availMov.end(), mov))
+    //     printf("exists\n");
+    // else 
+
+    this->availMov.erase(unique(this->availMov.begin(), this->availMov.end()), this->availMov.end());
     this->printAvailMov();
 }
 
-bool comp(Move mov1, Move mov2){
-    if(mov1.x < mov2.x) return true;
-    else if(mov1.y < mov1.y) return true;
-    else return false;
-}
 
 
 //-----class Mcts-----//
@@ -103,15 +141,23 @@ void Mcts::rollout(){
     printf("rollout\n");
 }
 void Mcts::findMoves(Node& node){
-    int tempBoard[19][19] = {1, };
+    int tempBoard[19][19];
+    //fill( &(tempBoard[0][0]), &(tempBoard[0][0]) + sizeof(tempBoard), 1 );
+
+    for(int i =0; i< 19; i++){
+        for(int j =0; j < 19; j++){
+            tempBoard[i][j] = 1;
+        }
+    }
+
     for(int i = 0; i < 19; i++){
-        for(int j = 0; j < 19; i++){
+        for(int j = 0; j < 19; j++){
             if(node.board[i][j]){
                 tempBoard[i][j] = 0;
                 int ksmall = ifSmaller(i - MOVRANGE);
-                int kbig = ifBigger(i + MOVRANGE);
+                int kbig = ifBigger(i + MOVRANGE + 1);
                 int lsmall = ifSmaller(j - MOVRANGE);
-                int lbig = ifBigger(j + MOVRANGE);
+                int lbig = ifBigger(j + MOVRANGE + 1);
                 for(int k = ksmall; k < kbig; k++){
                     for(int l = lsmall; l < lbig; l++){
                         tempBoard[k][l] *= 2;
@@ -120,26 +166,35 @@ void Mcts::findMoves(Node& node){
             }
         }
     }
-
     for(int i = 0; i < 19; i++){
         for(int j = 0; j < 19; j++){
+            printf("%2d ", tempBoard[i][j]);
             if(tempBoard[i][j] > 1){
-                
+                Move tempMove;
+                tempMove.x = i;
+                tempMove.y = j;
+                node.appendAvailMov(tempMove);
             }
         }
+        printf("\n");
     }
+    node.printAvailMov();
 }
+
 int Mcts::ifBigger(int num){
     if(num > 19) return 19;
     else return num;
 }
+
 int Mcts::ifSmaller(int num){
     if(num < 0) return 0;
     else return num;
 }
+
 void Mcts::chkTime(){
 
 }
+
 void Mcts::chkVic(){
     // int color = 0, cnt = 0;
     // for(int i = 0; i < 19; i++){
