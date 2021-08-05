@@ -12,9 +12,9 @@ int main(){
     // a.rollout();
     Node b = Node(1);
     Move start = {8,9};
-    m.placeStones(start, 1, b);
+    m.placeStones(start, 1, &b);
 
-    m.select(b);
+    m.select(&b);
 
     // Node c = Node(2, &b);
     // Node d = Node(1, &c);

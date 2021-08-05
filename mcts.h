@@ -11,6 +11,12 @@ typedef struct Move{
     int x, y;
 }Move;
 
+// typedef struct Node{
+//     int t, n, color;
+//     float ucb;
+//     vector<Node*>
+// }
+
 bool comp(Move mov1, Move mov2);
 
 class Node{
@@ -36,6 +42,7 @@ class Node{
         void appendAvailMov(Move mov);
         void freeNode();
 };
+// typedef Node* pNode;
 
 
 
@@ -45,17 +52,17 @@ class Mcts{
 
     void runGame();
     float calcUCB(Node* node);
-    void expansion(Node& currnode);
+    void expansion(Node* currnode);
     Node* backprop(Node* currNode, int value);
-    void select(Node& rootNode);
-    void findMoves(Node& node);
-    int rollout(Node& currnode);
+    void select(Node* rootNode);
+    void findMoves(Node* node);
+    int rollout(Node* currnode);
     int ifBigger(int num);
     int ifSmaller(int num);
     void chkTime();
-    int chkVic(Node& currnode);
-    void placeStones(const Move stone, int color, Node& checknode);
-    bool isNotFull(Node& checknode);
-    Node* searchBigUCB(Node& parentNode);
+    int chkVic(Node* currnode);
+    void placeStones(const Move stone, int color, Node* checknode);
+    bool isNotFull(Node* checknode);
+    Node* searchBigUCB(Node* parentNode);
 };
 
