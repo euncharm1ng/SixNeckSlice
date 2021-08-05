@@ -29,8 +29,8 @@ Node::Node(int curr_color, pNode myparent){ //find move with
     t = 0;
     n = 0;
     ucb = INFI;
-    children.resize(128);
-    availMov.resize(32);
+    //children.resize(128);
+    //availMov.resize(32);
 
     this->board = (int**)malloc(sizeof(int*) * BOARDSIZE);
     for(int i = 0; i< BOARDSIZE; i++){
@@ -107,11 +107,12 @@ void Node::printAvailMov(){
     #if DEBUG
     printf("==print Avail Mov\n");
     #endif
-    int i =0;
+    int i = 0;
     for(auto& m : this->availMov){
         if(i++ % 10 == 0) printf("\n");
         printf("x: %2d, y: %2d \t", m.x, m.y);
     }
+    printf("\n");
     #if DEBUG
     printf("==end of print Avail Mov\n");
     #endif

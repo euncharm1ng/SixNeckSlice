@@ -53,29 +53,29 @@ void Mcts::select(pNode rootNode){
     int i =0;
 
     this->expansion(rootNode);
-    for(int i =0; i< 10; i++){
-        pNode child = rootNode->children[i];
+    // for(int i =0; i< 1; i++){
+    //     pNode child = rootNode->children[i];
+    //     //value = this->rollout(child);
+    //     this->backprop(child, 1);
+    //     this->expansion(child);
+    // }
+    for(pNode child : rootNode->children){
         value = this->rollout(child);
         this->backprop(child, value);
         this->expansion(child);
     }
-    // for(pNode child : rootNode->children){
-    //     value = this->rollout(child);
-    //     this->backprop(child, value);
-    //     this->expansion(child);
-    // }
     rootNode->n += rootNode->children.size();
-    printf("in selection, root: %d\n", rootNode->n);
-    pNode mytempnode = this->searchBigUCB(rootNode);
-    printf("t= %d, ucb = %f, n = %d\n", mytempnode->t, mytempnode->ucb, mytempnode->n);
+    //printf("in selection, root: %d\n", rootNode->n);
+    //pNode mytempnode = this->searchBigUCB(rootNode);
+    //printf("t= %d, ucb = %f, n = %d\n", mytempnode->t, mytempnode->ucb, mytempnode->n);
     
     pNode tempnode = NULL;
     do {
-        printf("in select: %d\n", 1);
+        //printf("in select: %d\n", 1);
 
         tempnode = rootNode;
         tempnode = this->searchBigUCB(tempnode);
-        printf("in do while: t= %d, ucb = %f, n = %d\n", tempnode->t, tempnode->ucb, tempnode->n);
+        //printf("in do while: t= %d, ucb = %f, n = %d\n", tempnode->t, tempnode->ucb, tempnode->n);
         while(!tempnode->children.empty()) tempnode = this->searchBigUCB(tempnode); //not empty
  
         value = this->rollout(tempnode);
@@ -90,14 +90,16 @@ void Mcts::select(pNode rootNode){
     pNode result = this->searchBigUCB(rootNode);
     printf("result print board\n");
     result->printBoard();
+    
 }
 
 void Mcts::expansion(pNode currnode) {
+    //currnode->printBoard();
     this->findMoves(currnode);
     int child_color = (currnode->color == BLACK) ? WHITE : BLACK;
     int size = currnode->availMov.size();
-    printf("in expansion, size: %d\n", size);
-    currnode->printAvailMov();
+    //printf("in expansion, size: %d\n", size);
+    //currnode->printAvailMov();
     Move mov1, mov2;
     for (int i = 0; i < size; i++) {
         mov1 = currnode->availMov[i];
@@ -147,7 +149,7 @@ int Mcts::rollout(pNode currnode){
         //if(chkVic(tempnode)==aicolor) return 20;
         //else if(return 5;
     }while(1);
-    tempnode->printBoard();
+    //tempnode->printBoard();
     //currnode->setUCB(10);
 
     delete tempnode;
@@ -215,6 +217,7 @@ void Mcts::findMoves(pNode node){
                 Move tempMove;
                 tempMove.x = i;
                 tempMove.y = j;
+                //printf("appending %d, %d\n", tempMove.x, tempMove.y);
                 node->appendAvailMov(tempMove);
             }
         }
@@ -248,7 +251,7 @@ float Mcts::calcUCB(pNode node){
 
 int Mcts::chkVic(pNode node){
     int color = 0, cnt = 0;
-    #if DEBUG
+    #if DEBUG == 2
     printf("dir1---------\n");
     #endif
     // dir1 horizontal
@@ -260,11 +263,11 @@ int Mcts::chkVic(pNode node){
                     cnt++;
                     j++;
                 }
-                #if DEBUG
+                #if DEBUG == 2
                 printf("outside while, cnt = %d, i = %d, j = %d\n", cnt, i, j);
                 #endif
                 if(cnt > 5){ 
-                    #if DEBUG 
+                    #if DEBUG == 2
                     printf("found winner\n"); 
                     #endif 
                     return color;}
@@ -275,7 +278,7 @@ int Mcts::chkVic(pNode node){
             }
         }
     } // enf of dir1
-    #if DEBUG
+    #if DEBUG == 2
     printf("dir2---------\n");
     #endif
     // dir2 vertical
@@ -287,11 +290,11 @@ int Mcts::chkVic(pNode node){
                     cnt++;
                     i++;
                 }
-                #if DEBUG
+                #if DEBUG == 2
                 printf("outside while, cnt = %d, i = %d, j = %d\n", cnt, i, j);
                 #endif
                 if(cnt > 5){ 
-                    #if DEBUG 
+                    #if DEBUG == 2
                     printf("found winner\n"); 
                     #endif 
                     return color;}
@@ -302,7 +305,7 @@ int Mcts::chkVic(pNode node){
             }
         }
     }// end of dir2
-    #if DEBUG
+    #if DEBUG == 2
     printf("dir3---------\n");
     #endif
     // dir3 diag top left to bot right
@@ -316,11 +319,11 @@ int Mcts::chkVic(pNode node){
                     i++;
                     j++;
                 }
-            #if DEBUG
+            #if DEBUG == 2
                 printf("outside while, cnt = %d, i = %d, j = %d\n", cnt, i, j);
             #endif
                 if(cnt > 5){ 
-                    #if DEBUG 
+                    #if DEBUG == 2
                     printf("found winner\n"); 
                     #endif 
                     return color;}
@@ -344,11 +347,11 @@ int Mcts::chkVic(pNode node){
                     i++;
                     j++;
                 }
-                #if DEBUG
+                #if DEBUG == 2
                 printf("outside while, cnt = %d, i = %d, j = %d\n", cnt, i, j);
                 #endif
                 if(cnt > 5){ 
-                    #if DEBUG 
+                    #if DEBUG == 2
                     printf("found winner\n"); 
                     #endif 
                     return color;}
@@ -361,7 +364,7 @@ int Mcts::chkVic(pNode node){
             i++;
         }
     }// end of dir3 pt2
-    #if DEBUG
+    #if DEBUG == 2
     printf("dir4---------\n");
     #endif
     // dir4 diag top right to bot left
@@ -375,11 +378,11 @@ int Mcts::chkVic(pNode node){
                     i++;
                     j--;
                 }
-                #if DEBUG
+                #if DEBUG == 2
                 printf("outside while, cnt = %d, i = %d, j = %d\n", cnt, i, j);
                 #endif
                 if(cnt > 5){ 
-                    #if DEBUG 
+                    #if DEBUG == 2
                     printf("found winner\n"); 
                     #endif 
                     return color;}
@@ -402,11 +405,11 @@ int Mcts::chkVic(pNode node){
                     i++;
                     j--;
                 }
-                #if DEBUG
+                #if DEBUG == 2
                 printf("outside while, cnt = %d, i = %d, j = %d\n", cnt, i, j);
                 #endif
                 if(cnt > 5){ 
-                    #if DEBUG 
+                    #if DEBUG == 2
                     printf("found winner\n"); 
                     #endif 
                     return color;}
@@ -419,7 +422,7 @@ int Mcts::chkVic(pNode node){
             j--;
         }
     }// end of dir4 pt2
-    #if DEBUG
+    #if DEBUG == 2
     printf("end of chkvic()\n");
     #endif
     return 0;
