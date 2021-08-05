@@ -50,56 +50,55 @@ void Mcts::select(pNode rootNode){
     time_t startTime = clock();
     float time = 0;
     int value = 0;
-    int i =0;
+    int i = 0, j =0;
 
     this->expansion(rootNode);
-    // for(int i =0; i< 1; i++){
-    //     pNode child = rootNode->children[i];
-    //     //value = this->rollout(child);
-    //     this->backprop(child, 1);
-    //     this->expansion(child);
-    // }
+
     for(pNode child : rootNode->children){
         value = this->rollout(child);
         this->backprop(child, value);
         this->expansion(child);
     }
     rootNode->n += rootNode->children.size();
-    //printf("in selection, root: %d\n", rootNode->n);
-    //pNode mytempnode = this->searchBigUCB(rootNode);
-    //printf("t= %d, ucb = %f, n = %d\n", mytempnode->t, mytempnode->ucb, mytempnode->n);
-    
+    printf("end of 1st expansion\n");
     pNode tempnode = NULL;
     do {
-        //printf("in select: %d\n", 1);
-
         tempnode = rootNode;
         tempnode = this->searchBigUCB(tempnode);
-        //printf("in do while: t= %d, ucb = %f, n = %d\n", tempnode->t, tempnode->ucb, tempnode->n);
         while(!tempnode->children.empty()) tempnode = this->searchBigUCB(tempnode); //not empty
  
         value = this->rollout(tempnode);
         this->expansion(tempnode);
         tempnode = this->backprop(tempnode, value);
 
-        time_t endTime = clock();
-        time = (endTime - startTime) / double(CLOCKS_PER_SEC);
+        //time_t endTime = clock();
+        //time = (endTime - startTime) / double(CLOCKS_PER_SEC);
         i++;
-    }while(time < 20);
-    printf("%d runs\n", i);
+        if(i == 5000){
+            printf("%d\n", j);
+            i = 0;
+            j++;
+            time_t endTime = clock();
+            time = (endTime - startTime) / double(CLOCKS_PER_SEC);
+            if(time > 20) break;
+        }
+    }while(1);//time < 20);
+    time_t endTime = clock();
+    time = (endTime - startTime) / double(CLOCKS_PER_SEC);
+    printf("time: %f\n", time);
+    printf("%d runs\n", 5000*j);
     pNode result = this->searchBigUCB(rootNode);
     printf("result print board\n");
     result->printBoard();
     
+    
 }
 
 void Mcts::expansion(pNode currnode) {
-    //currnode->printBoard();
     this->findMoves(currnode);
     int child_color = (currnode->color == BLACK) ? WHITE : BLACK;
     int size = currnode->availMov.size();
-    //printf("in expansion, size: %d\n", size);
-    //currnode->printAvailMov();
+    printf("in expansion %d\n", size);
     Move mov1, mov2;
     for (int i = 0; i < size; i++) {
         mov1 = currnode->availMov[i];
@@ -183,11 +182,11 @@ pNode Mcts::searchBigUCB(pNode parentNode){
 }
 
 void Mcts::findMoves(pNode node){
-    int tempBoard[19][19];
+    unsigned short int tempBoard[19][19];
 
     for(int i =0; i< 19; i++){
         for(int j =0; j < 19; j++){
-            tempBoard[i][j] = 1;
+            tempBoard[i][j] = 2;
         }
     }
 
@@ -201,7 +200,7 @@ void Mcts::findMoves(pNode node){
                 int lbig = ifBigger(j + MOVRANGE + 1);
                 for(int k = ksmall; k < kbig; k++){
                     for(int l = lsmall; l < lbig; l++){
-                        tempBoard[k][l] *= 2;
+                        tempBoard[k][l] *= 1.5;
                     }
                 }
             }
@@ -213,11 +212,10 @@ void Mcts::findMoves(pNode node){
             #if DEBUG
             printf("%2d ", tempBoard[i][j]);
             #endif
-            if(tempBoard[i][j] > 1){
+            if(tempBoard[i][j] > 2){
                 Move tempMove;
                 tempMove.x = i;
                 tempMove.y = j;
-                //printf("appending %d, %d\n", tempMove.x, tempMove.y);
                 node->appendAvailMov(tempMove);
             }
         }

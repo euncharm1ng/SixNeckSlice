@@ -13,16 +13,13 @@ bool comp(Move mov1, Move mov2){
     else return false;
 }
 
-bool operator == (const Move &m1, const Move &m2)
-{
+bool operator == (const Move &m1, const Move &m2){
    if(m1.x == m2.x && m1.y == m2.y)
      return true;
    else
      return false;
 }
 
-
-//-----class Node-----//
 Node::Node(int curr_color, pNode myparent){ //find move with 
     color = curr_color;
     parent = myparent;
@@ -32,9 +29,9 @@ Node::Node(int curr_color, pNode myparent){ //find move with
     //children.resize(128);
     //availMov.resize(32);
 
-    this->board = (int**)malloc(sizeof(int*) * BOARDSIZE);
+    this->board = (unsigned short int**)malloc(sizeof(unsigned short int*) * BOARDSIZE);
     for(int i = 0; i< BOARDSIZE; i++){
-        this->board[i] = (int*)malloc(sizeof(int) * BOARDSIZE);
+        this->board[i] = (unsigned short int*)malloc(sizeof(unsigned short int) * BOARDSIZE);
         for(int j =0; j< BOARDSIZE; j++){
             this->board[i][j] = myparent->board[i][j];
         }
@@ -50,9 +47,9 @@ Node::Node(int curr_color){
     vector<pNode> children;
     vector<Move> availMov;
 
-    this->board = (int**)malloc(sizeof(int*) * BOARDSIZE);
+    this->board = (unsigned short int**)malloc(sizeof(unsigned short int*) * BOARDSIZE);
     for(int i = 0; i< BOARDSIZE; i++){
-        this->board[i] = (int*)malloc(sizeof(int) * BOARDSIZE);
+        this->board[i] = (unsigned short int*)malloc(sizeof(unsigned short int) * BOARDSIZE);
         for(int j =0; j< BOARDSIZE; j++){
             this->board[i][j] = 0;
         }

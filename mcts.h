@@ -27,7 +27,7 @@ class Node{
         vector<Node*> children;
         vector<Move> availMov;
         Node* parent;
-        int** board;
+        unsigned short int** board;
         Move mov1, mov2;
 
         Node(int curr_color, Node* myparent);//, Move mov1, Move mov2);
