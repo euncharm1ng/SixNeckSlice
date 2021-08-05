@@ -13,8 +13,9 @@ int main(){
     Node b = Node(1);
     Move start = {8,9};
     m.placeStones(start, 1, b);
-
+    printf("before select\n");
     m.select(b);
+    printf("after select\n");
 
     // Node c = Node(2, &b);
     // Node d = Node(1, &c);

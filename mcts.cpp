@@ -17,7 +17,7 @@
 #define BOARDSIZE 19
 #define MOVRANGE 2
 #define TIMELIMIT 20
-#define INFI 2147483647
+#define INFI 340282346638528859811704183484516925440.000000
 
 using namespace std;
 //int a = numeric_limits<int>::max();
@@ -239,12 +239,16 @@ void Mcts::select(Node& rootNode){
     for(auto & child : rootNode.children){
         value = this->rollout(*child);
         this->backprop(child, value);
-        this->expansion(*child);
+        //this->expansion(*child);
         //expand all child node
     }
+
+    printf("in selection, root: %d\n", rootNode.t);
+    //printf("in selection, root: %f\n", rootNode.ucb);
     
     Node* tempnode = NULL;
     do {
+        printf("in select: %d\n", 1);
         tempnode = &rootNode;
         tempnode = this->searchBigUCB(*tempnode);
         while(!tempnode->children.empty()) tempnode = this->searchBigUCB(*tempnode); //not empty
@@ -284,7 +288,7 @@ select: (currnode = currnode.biggestchild)
 */
 Node* Mcts::searchBigUCB(Node& parentNode){
     float max = -100, chk=0;
-    Node* returnNode;
+    Node* returnNode = NULL;
     for(Node* tempNode : parentNode.children) {
         chk = this->calcUCB(tempNode);
         if(chk > max) {
