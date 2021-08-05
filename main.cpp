@@ -12,10 +12,16 @@ int main(){
     // a.rollout();
     Node b = Node(1);
     Move start = {8,9};
+<<<<<<< HEAD
     m.placeStones(start, 1, b);
     printf("before select\n");
     m.select(b);
     printf("after select\n");
+=======
+    m.placeStones(start, 1, &b);
+
+    m.select(&b);
+>>>>>>> 811ec45acc15a867ecaebea3f83a590528454b45
 
     // Node c = Node(2, &b);
     // Node d = Node(1, &c);

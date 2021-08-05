@@ -184,24 +184,24 @@ float Mcts::calcUCB(Node* node){
     return node->ucb;
 }
 
-void Mcts::expansion(Node& currnode) {
+void Mcts::expansion(Node* currnode) {
     this->findMoves(currnode);
-    int child_color = (currnode.color == BLACK) ? WHITE : BLACK;
-    int size = currnode.availMov.size();
+    int child_color = (currnode->color == BLACK) ? WHITE : BLACK;
+    int size = currnode->availMov.size();
     Move mov1, mov2;
     for (int i = 0; i < size; i++) {
-        mov1 = currnode.availMov[i];
+        mov1 = currnode->availMov[i];
         for (int j = i + 1; j < size; j++) {
-            mov2 = currnode.availMov[j];
-            Node* tempnode = new Node(child_color, &currnode);
-            this->placeStones(mov1, child_color, *tempnode);
-            this->placeStones(mov2, child_color, *tempnode);
-            currnode.addC(tempnode);
+            mov2 = currnode->availMov[j];
+            Node* tempnode = new Node(child_color, currnode);
+            this->placeStones(mov1, child_color, tempnode);
+            this->placeStones(mov2, child_color, tempnode);
+            currnode->addC(tempnode);
         }
     }
-    currnode.availMov.clear();
-    currnode.availMov.resize(0);
-    currnode.availMov.shrink_to_fit();
+    currnode->availMov.clear();
+    currnode->availMov.resize(0);
+    currnode->availMov.shrink_to_fit();
 }
 
 //(update ucb, t of ancestor node for root)
@@ -228,7 +228,7 @@ Node* Mcts::backprop(Node* currNode, int value){//vector<Node> &parent, int upda
 //     ucb 값 들 중 무한이 아닌 거 rollout & backprop
 //     올라가기
 // }
-void Mcts::select(Node& rootNode){
+void Mcts::select(Node* rootNode){
     //vector<Node*> parentNodes;
     time_t startTime = clock();
     float time = 0;
@@ -236,10 +236,14 @@ void Mcts::select(Node& rootNode){
     int i =0;
 
     this->expansion(rootNode);
-    for(auto & child : rootNode.children){
-        value = this->rollout(*child);
+    for(auto & child : rootNode->children){
+        value = this->rollout(child);
         this->backprop(child, value);
+<<<<<<< HEAD
         //this->expansion(*child);
+=======
+        this->expansion(child);
+>>>>>>> 811ec45acc15a867ecaebea3f83a590528454b45
         //expand all child node
     }
 
@@ -248,13 +252,19 @@ void Mcts::select(Node& rootNode){
     
     Node* tempnode = NULL;
     do {
+<<<<<<< HEAD
         printf("in select: %d\n", 1);
         tempnode = &rootNode;
         tempnode = this->searchBigUCB(*tempnode);
         while(!tempnode->children.empty()) tempnode = this->searchBigUCB(*tempnode); //not empty
+=======
+        tempnode = rootNode;
+        tempnode = this->searchBigUCB(tempnode);
+        while(!tempnode->children.empty()) tempnode = this->searchBigUCB(tempnode); //not empty
+>>>>>>> 811ec45acc15a867ecaebea3f83a590528454b45
         
-        value = this->rollout(*tempnode);
-        this->expansion(*tempnode);
+        value = this->rollout(tempnode);
+        this->expansion(tempnode);
         tempnode = this->backprop(tempnode, value);
 
 
@@ -286,10 +296,14 @@ select: (currnode = currnode.biggestchild)
         if empty - expansion ->> rollout random ->> backprop
         if not empty - choose biggest child ->> jump to select
 */
-Node* Mcts::searchBigUCB(Node& parentNode){
+Node* Mcts::searchBigUCB(Node* parentNode){
     float max = -100, chk=0;
     Node* returnNode = NULL;
+<<<<<<< HEAD
     for(Node* tempNode : parentNode.children) {
+=======
+    for(Node* tempNode : parentNode->children) {
+>>>>>>> 811ec45acc15a867ecaebea3f83a590528454b45
         chk = this->calcUCB(tempNode);
         if(chk > max) {
             max = chk;
@@ -299,7 +313,7 @@ Node* Mcts::searchBigUCB(Node& parentNode){
     return returnNode;
 }
 
-void Mcts::findMoves(Node& node){
+void Mcts::findMoves(Node* node){
     int tempBoard[19][19];
 
     for(int i =0; i< 19; i++){
@@ -310,7 +324,7 @@ void Mcts::findMoves(Node& node){
 
     for(int i = 0; i < 19; i++){
         for(int j = 0; j < 19; j++){
-            if(node.board[i][j]){
+            if(node->board[i][j]){
                 tempBoard[i][j] = 0;
                 int ksmall = ifSmaller(i - MOVRANGE);
                 int kbig = ifBigger(i + MOVRANGE + 1);
@@ -333,7 +347,7 @@ void Mcts::findMoves(Node& node){
                 Move tempMove;
                 tempMove.x = i;
                 tempMove.y = j;
-                node.appendAvailMov(tempMove);
+                node->appendAvailMov(tempMove);
             }
         }
         #if DEBUG
@@ -341,42 +355,42 @@ void Mcts::findMoves(Node& node){
         #endif
     }
     #if DEBUG
-    node.printAvailMov();
+    node->printAvailMov();
     #endif
 }
 
 
 // 1 : BLACK win, 2 : WHITE win
-int Mcts::rollout(Node& currnode){
-    int aicolor = currnode.color;
+int Mcts::rollout(Node* currnode){
+    int aicolor = currnode->color;
     int usercolor = (aicolor == BLACK) ? WHITE : BLACK;
     int turn = (aicolor == BLACK) ? WHITE : BLACK;
     Move mov1={0,0},mov2={0,0};
-    Node tempnode = Node(1, &currnode);
+    Node* tempnode = new Node(1, currnode);
     srand(time(NULL));
     do {
-        tempnode.availMov.clear();
+        tempnode->availMov.clear();
         this->findMoves(tempnode);
-        if(tempnode.availMov.size() == 0) break;
+        if(tempnode->availMov.size() == 0) break;
         turn = (turn == BLACK) ? WHITE : BLACK;
-        mov1 = tempnode.availMov[rand()%(tempnode.availMov.size())];
+        mov1 = tempnode->availMov[rand()%(tempnode->availMov.size())];
         do {
-            mov2 = tempnode.availMov[rand()%(tempnode.availMov.size())];
+            mov2 = tempnode->availMov[rand()%(tempnode->availMov.size())];
         }while(mov1.x == mov2.x && mov1.y == mov2.y);
         this->placeStones(mov1, turn, tempnode);
         this->placeStones(mov2, turn, tempnode);
         if(chkVic(tempnode)) {
             #if DEBUG
-            tempnode.printBoard();
+            tempnode->printBoard();
             #endif
-            currnode.setUCB(20);
+            currnode->setUCB(20);
             return 20;
         }
         //if(chkVic(tempnode)==aicolor) return 20;
         //else if(return 5;
     }while(1);
-    tempnode.printBoard();
-    currnode.setUCB(10);
+    tempnode->printBoard();
+    currnode->setUCB(10);
     return 10;
 }
 
@@ -396,7 +410,7 @@ void Mcts::chkTime(){
 }
 
 
-int Mcts::chkVic(Node& node){
+int Mcts::chkVic(Node* node){
     int color = 0, cnt = 0;
     #if DEBUG
     printf("dir1---------\n");
@@ -404,9 +418,9 @@ int Mcts::chkVic(Node& node){
     // dir1 horizontal
     for(int i = 0; i < 19; i++){
         for(int j = 0; j < 19; j++){
-            if (node.board[i][j]){
-                color = node.board[i][j];
-                while(j < 19 && color == node.board[i][j]){
+            if (node->board[i][j]){
+                color = node->board[i][j];
+                while(j < 19 && color == node->board[i][j]){
                     cnt++;
                     j++;
                 }
@@ -431,9 +445,9 @@ int Mcts::chkVic(Node& node){
     // dir2 vertical
     for(int j = 0; j< 19; j++){
         for(int i =0; i < 19; i++){
-            if(node.board[i][j]){
-                color = node.board[i][j];
-                while(i<19 && color == node.board[i][j]){
+            if(node->board[i][j]){
+                color = node->board[i][j];
+                while(i<19 && color == node->board[i][j]){
                     cnt++;
                     i++;
                 }
@@ -459,9 +473,9 @@ int Mcts::chkVic(Node& node){
     for(int k = 0; k < 14; k++){
         int i = k, j = 0;
         while(i < 19){
-            if(node.board[i][j]){
-                color = node.board[i][j];
-                while(i < 19 && color == node.board[i][j]){
+            if(node->board[i][j]){
+                color = node->board[i][j];
+                while(i < 19 && color == node->board[i][j]){
                     cnt++;
                     i++;
                     j++;
@@ -487,9 +501,9 @@ int Mcts::chkVic(Node& node){
     for(int k = 1; k < 14; k++){
         int j = k, i = 0;
         while(j < 19){
-            if(node.board[i][j]){
-                color = node.board[i][j];
-                while(j < 19 && color == node.board[i][j]){
+            if(node->board[i][j]){
+                color = node->board[i][j];
+                while(j < 19 && color == node->board[i][j]){
                     cnt++;
                     i++;
                     j++;
@@ -518,9 +532,9 @@ int Mcts::chkVic(Node& node){
     for(int k = 5; k < 19; k++){
         int j = k, i = 0;
         while(j > -1){
-            if(node.board[i][j]){
-                color = node.board[i][j];
-                while(j > -1 && color == node.board[i][j]){
+            if(node->board[i][j]){
+                color = node->board[i][j];
+                while(j > -1 && color == node->board[i][j]){
                     cnt++;
                     i++;
                     j--;
@@ -545,9 +559,9 @@ int Mcts::chkVic(Node& node){
     for(int k =1; k < 14; k++){
         int i = k, j = 18;
         while(i < 19){
-            if(node.board[i][j]){
-                color = node.board[i][j];
-                while(i < 19 && color == node.board[i][j]){
+            if(node->board[i][j]){
+                color = node->board[i][j];
+                while(i < 19 && color == node->board[i][j]){
                     cnt++;
                     i++;
                     j--;
@@ -575,8 +589,8 @@ int Mcts::chkVic(Node& node){
     return 0;
 }// end of chkVic()
 
-void Mcts::placeStones(const Move stone, int color, Node& checknode){
-    checknode.board[stone.x][stone.y] = color;
+void Mcts::placeStones(const Move stone, int color, Node* checknode){
+    checknode->board[stone.x][stone.y] = color;
 }
 
 
