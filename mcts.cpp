@@ -87,11 +87,11 @@ void Mcts::select(pNode rootNode){
     time = (endTime - startTime) / double(CLOCKS_PER_SEC);
     printf("time: %f\n", time);
     printf("%d runs\n", 5000*j);
-    pNode result = this->searchBigUCB(rootNode);
+
+    //pNode result = this->searchBigUCB(rootNode);
+    pNode result = this->returnMov(rootNode);
     printf("result print board\n");
     result->printBoard();
-    
-    
 }
 
 void Mcts::expansion(pNode currnode) {
@@ -243,7 +243,7 @@ void Mcts::chkTime(){
 }
 
 float Mcts::calcUCB(pNode node){
-    node->ucb = node->t + 2*(sqrt(log(node->parent->n)/node->n));
+    node->ucb = (node->t / node->n) + 2*(sqrt(log(node->parent->n)/node->n));
     return node->ucb;
 }
 
@@ -430,6 +430,18 @@ void Mcts::placeStones(const Move stone, int color, pNode checknode){
     checknode->board[stone.x][stone.y] = color;
 }
 
+pNode Mcts::returnMov(pNode rootNode){
+    float max = -1, value = 0;
+    pNode toReturn = NULL;
+    for(pNode child : rootNode->children){
+        value = float(child->t) / float(child->n);
+        if(max < value){
+            max = value;
+            toReturn = child;
+        }
+    }
+    return toReturn;
+}
 
 
 

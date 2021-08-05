@@ -22,7 +22,7 @@ bool comp(Move mov1, Move mov2);
 
 class Node{
     public:
-        int t, n, color;
+        short int t, n, color;
         float ucb;
         vector<Node*> children;
         vector<Move> availMov;
@@ -65,5 +65,6 @@ class Mcts{
     void placeStones(const Move stone, int color, pNode checknode);
     bool isNotFull(pNode checknode);
     pNode searchBigUCB(pNode parentNode);
+    pNode returnMov(pNode root);
 };
 
