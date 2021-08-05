@@ -44,10 +44,10 @@ class Mcts{
     Mcts();
 
     void runGame();
-    void calcUCB(Node* node);
+    float calcUCB(Node* node);
     void expansion(Node& currnode);
-    void backprop();
-    void select();
+    Node* backprop(Node* currNode, int value);
+    void select(Node& rootNode);
     void findMoves(Node& node);
     int rollout(Node& currnode);
     int ifBigger(int num);
@@ -56,6 +56,6 @@ class Mcts{
     int chkVic(Node& currnode);
     void placeStones(const Move stone, int color, Node& checknode);
     bool isNotFull(Node& checknode);
-
+    Node* searchBigUCB(Node& parentNode);
 };
 

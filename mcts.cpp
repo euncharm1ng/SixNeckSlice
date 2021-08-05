@@ -8,6 +8,8 @@
 #include <cmath>
 #include <string.h>
 #include <ctime>
+//#include <limits>
+
 
 #define DEBUG 0 //to 1 to run in debug mode
 #define BLACK 1
@@ -15,12 +17,15 @@
 #define BOARDSIZE 19
 #define MOVRANGE 2
 #define TIMELIMIT 20
+#define INFI 2147483647
 
 using namespace std;
+//int a = numeric_limits<int>::max();
 
 /*
 todo:
     top-down: selection (update n of all passing nodes )
+        calc ucb every time
         remove parent node
     bottom-up: backpropagation (update ucb, t of ancestor node)
     rungame (selction -> expansion -> rollout -> backprop) for TIMELIMIT == 20 sec
@@ -48,7 +53,7 @@ Node::Node(int curr_color, Node* myparent){ //find move with
     parent = myparent;
     t = 0;
     n = 0;
-    ucb = 0;
+    ucb = INFI;
     children.resize(128);
     availMov.resize(32);
 
@@ -66,7 +71,7 @@ Node::Node(int curr_color){
     parent = NULL;
     t = 0;
     n = 0;
-    ucb = 0;
+    ucb = INFI;
     vector<Node*> children;
     vector<Move> availMov;
 
@@ -174,8 +179,9 @@ void Mcts::runGame(){//Node& currNode){
 
     
 }
-void Mcts::calcUCB(Node* node){
+float Mcts::calcUCB(Node* node){
     node->ucb = node->t + 2*(sqrt(log(node->parent->n)/node->n));
+    return node->ucb;
 }
 
 void Mcts::expansion(Node& currnode) {
@@ -200,12 +206,93 @@ void Mcts::expansion(Node& currnode) {
 
 //(update ucb, t of ancestor node for root)
 // input : 
-void Mcts::backprop(){//vector<Node> &parent, int updateT){
-    
+
+Node* Mcts::backprop(Node* currNode, int value){//vector<Node> &parent, int updateT){
+    while(currNode->parent != NULL){
+        currNode->t += value;
+        currNode = currNode->parent;
+    }
+    return currNode;
 }
 
-void Mcts::select(){
+//자식 노드들 중 제일 큰 거 선택 
+//if(child가 없다){
+//      expansion()
+//      child node 들 중 하나 rollout & backprop
+//      올라가기
+// }
+//else(있다) {
+//     if(모든 ucb 값들이 무한이 아니다){
+//              ucb 값 들 중 큰 거 선택
+//     }
+//     ucb 값 들 중 무한이 아닌 거 rollout & backprop
+//     올라가기
+// }
+void Mcts::select(Node& rootNode){
+    //vector<Node*> parentNodes;
+    time_t startTime = clock();
+    float time = 0;
+    int value = 0;
+    int i =0;
 
+    this->expansion(rootNode);
+    for(auto & child : rootNode.children){
+        value = this->rollout(*child);
+        this->backprop(child, value);
+        this->expansion(*child);
+        //expand all child node
+    }
+    
+    Node* tempnode = NULL;
+    do {
+        tempnode = &rootNode;
+        tempnode = this->searchBigUCB(*tempnode);
+        while(!tempnode->children.empty()) tempnode = this->searchBigUCB(*tempnode); //not empty
+        
+        value = this->rollout(*tempnode);
+        this->expansion(*tempnode);
+        tempnode = this->backprop(tempnode, value);
+
+
+        // if(tempnode->children.empty()) {
+        //     this->expansion(tempnode);
+        //     tempnode = this->searchBigUCB(tempnode);
+        //     value = this->rollout(tempnode);
+        //     tempnode = this->backprop(tempnode, value);
+        // }
+        // else {
+        //     tempnode = this->isChildsUCB(tempnode);
+        //     if(tempnode->ucb != INFI) continue;           
+        //     value = this->rollout(tempnode);
+        //     tempnode = this->backprop(tempnode,value);
+        // }
+
+        time_t endTime = clock();
+        time = (endTime - startTime) / double(CLOCKS_PER_SEC);
+        i++;
+    }while(time < 20);
+    printf("%d runs\n", i);
+    Node* result = this->searchBigUCB(rootNode);
+    printf("result print board\n");
+    result->printBoard();
+}
+/*
+select: (currnode = currnode.biggestchild)
+    check for child.empty()
+        if empty - expansion ->> rollout random ->> backprop
+        if not empty - choose biggest child ->> jump to select
+*/
+Node* Mcts::searchBigUCB(Node& parentNode){
+    float max = -100, chk=0;
+    Node* returnNode;
+    for(Node* tempNode : parentNode.children) {
+        chk = this->calcUCB(tempNode);
+        if(chk > max) {
+            max = chk;
+            returnNode = tempNode;
+        }
+    }
+    return returnNode;
 }
 
 void Mcts::findMoves(Node& node){
@@ -483,9 +570,45 @@ int Mcts::chkVic(Node& node){
     #endif
     return 0;
 }// end of chkVic()
+
 void Mcts::placeStones(const Move stone, int color, Node& checknode){
     checknode.board[stone.x][stone.y] = color;
 }
 
 
 
+
+/*
+expand root and rollout all child
+ 1:
+//우리가 rollout 하는 node는 expansion이 된다. 
+select: (currnode = currnode.biggestchild)
+    check for child.empty()
+        if empty - expansion ->> rollout random ->> backprop
+        if not empty - choose biggest child ->> jump to select
+
+2:
+//모든 node가 expansion이 되지 않는다. 
+select: (currnode = currnode.biggestchild)
+    check for child.empty()
+        if empty - expansion ->> rollout random ->> backprop
+        if not empty - choose biggest child ->
+            if biggest child's ucb == INFI - rollout child ->> backprop
+            else - jump to select jump to select
+*/
+
+//자식 노드들 중 제일 큰 거 선택 
+//if(child가 없다){
+//      expansion()
+//      child node 들 중 하나 rollout & backprop
+//      올라가기
+// }
+//else(있다) {
+//     if(모든 ucb 값들이 무한이 아니다){
+//              ucb 값 들 중 큰 거 선택
+//     }
+//     else {
+//      ucb 값 들 중 무한인 거 rollout & backprop
+//      올라가기
+//     }
+// }
