@@ -23,7 +23,7 @@ bool operator == (const Move &m1, const Move &m2)
 
 
 //-----class Node-----//
-Node::Node(int curr_color, Node* myparent){ //find move with 
+Node::Node(int curr_color, pNode myparent){ //find move with 
     color = curr_color;
     parent = myparent;
     t = 0;
@@ -47,7 +47,7 @@ Node::Node(int curr_color){
     t = 0;
     n = 0;
     ucb = INFI;
-    vector<Node*> children;
+    vector<pNode> children;
     vector<Move> availMov;
 
     this->board = (int**)malloc(sizeof(int*) * BOARDSIZE);
@@ -69,7 +69,7 @@ void Node::freeNode(){
 }
 
 
-void Node::addC(Node* child){
+void Node::addC(pNode child){
     this->children.push_back(child);
 }
 void Node::printC(){
