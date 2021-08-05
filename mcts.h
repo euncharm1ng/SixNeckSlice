@@ -7,7 +7,7 @@
 
 using namespace std;
 
-typedef struct move{
+typedef struct Move{
     int x, y;
 }Move;
 
@@ -48,9 +48,7 @@ class Mcts{
     void expansion(Node& currnode);
     void backprop();
     void select();
-
     void findMoves(Node& node);
-
     int rollout(Node& currnode);
     int ifBigger(int num);
     int ifSmaller(int num);
@@ -58,5 +56,6 @@ class Mcts{
     int chkVic(Node& currnode);
     void placeStones(const Move stone, int color, Node& checknode);
     bool isNotFull(Node& checknode);
+
 };
 

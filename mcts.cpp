@@ -9,13 +9,22 @@
 #include <string.h>
 #include <ctime>
 
-#define DEBUG 0
+#define DEBUG 0 //to 1 to run in debug mode
 #define BLACK 1
 #define WHITE 2
 #define BOARDSIZE 19
 #define MOVRANGE 2
+#define TIMELIMIT 20
 
 using namespace std;
+
+/*
+todo:
+    top-down: selection (update n of all passing nodes )
+        remove parent node
+    bottom-up: backpropagation (update ucb, t of ancestor node)
+    rungame (selction -> expansion -> rollout -> backprop) for TIMELIMIT == 20 sec
+*/
 
 
 bool comp(Move mov1, Move mov2){
@@ -34,18 +43,14 @@ bool operator == (const Move &m1, const Move &m2)
 
 
 //-----class Node-----//
-Node::Node(int curr_color, Node* myparent){//, Move mov1, Move mov2){
+Node::Node(int curr_color, Node* myparent){ //find move with 
     color = curr_color;
     parent = myparent;
     t = 0;
     n = 0;
     ucb = 0;
-    vector<Node*> children;
-    vector<Move> availMov;
-    // this->mov1.x = mov1.x;
-    // this->mov1.y = mov1.y;
-    // this->mov2.x = mov2.x;
-    // this->mov2.y = mov2.y;
+    children.resize(128);
+    availMov.resize(32);
 
     this->board = (int**)malloc(sizeof(int*) * BOARDSIZE);
     for(int i = 0; i< BOARDSIZE; i++){
@@ -174,34 +179,37 @@ void Mcts::calcUCB(Node* node){
 }
 
 void Mcts::expansion(Node& currnode) {
-    time_t start = clock_t();
     this->findMoves(currnode);
     int child_color = (currnode.color == BLACK) ? WHITE : BLACK;
     int size = currnode.availMov.size();
     Move mov1, mov2;
     for (int i = 0; i < size; i++) {
+        mov1 = currnode.availMov[i];
         for (int j = i + 1; j < size; j++) {
-            Node* tempnode = new Node(child_color, &currnode);
-            mov1 = currnode.availMov[i];
             mov2 = currnode.availMov[j];
+            Node* tempnode = new Node(child_color, &currnode);
             this->placeStones(mov1, child_color, *tempnode);
             this->placeStones(mov2, child_color, *tempnode);
             currnode.addC(tempnode);
         }
     }
-    float end = (clock_t() - start) / double(CLOCKS_PER_SEC);
-    printf("expansion time: %f\n", end);
+    currnode.availMov.clear();
+    currnode.availMov.resize(0);
+    currnode.availMov.shrink_to_fit();
 }
 
-void Mcts::backprop(){
-
+//(update ucb, t of ancestor node for root)
+// input : 
+void Mcts::backprop(){//vector<Node> &parent, int updateT){
+    
 }
+
 void Mcts::select(){
 
 }
+
 void Mcts::findMoves(Node& node){
     int tempBoard[19][19];
-    //fill( &(tempBoard[0][0]), &(tempBoard[0][0]) + sizeof(tempBoard), 1 );
 
     for(int i =0; i< 19; i++){
         for(int j =0; j < 19; j++){
@@ -253,7 +261,7 @@ int Mcts::rollout(Node& currnode){
     int usercolor = (aicolor == BLACK) ? WHITE : BLACK;
     int turn = (aicolor == BLACK) ? WHITE : BLACK;
     Move mov1={0,0},mov2={0,0};
-    Node tempnode = Node(1, &currnode);//, mov1, mov2);  // todo, fix of update
+    Node tempnode = Node(1, &currnode);
     srand(time(NULL));
     do {
         tempnode.availMov.clear();
