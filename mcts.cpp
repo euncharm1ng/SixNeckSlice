@@ -216,8 +216,8 @@ void Mcts::findMoves(pNode node){
             #endif
             if(tempBoard[i][j] > 2){
                 Move tempMove;
-                tempMove.x = i;
-                tempMove.y = j;
+                tempMove.x = (short int) i;
+                tempMove.y = (short int) j;
                 node->appendAvailMov(tempMove);
             }
         }

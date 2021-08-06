@@ -8,7 +8,7 @@
 using namespace std;
 
 typedef struct Move{
-    int x, y;
+    short int x, y;
 }Move;
 
 // typedef struct Node{
