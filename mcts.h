@@ -14,7 +14,8 @@ TODO: free all nodes when result node is decided.
 
 using namespace std;
 
-typedef struct Move{
+
+typedef struct Move {
     short int x, y;
 }Move;
 typedef Move* pMove;
@@ -48,6 +49,7 @@ class Mcts{
 
     Mcts(short **paraBoard, short paraAiColor);
 
+
     float calcUCB(pNode node);
     void expansion(pNode currnode);
     pNode backprop(pNode currNode, short value);
@@ -57,7 +59,7 @@ class Mcts{
     int ifBigger(int num);
     int ifSmaller(int num);
     void chkTime();
-    int chkVic(pNode currnode); //need to update
+    int chkVic(unsigned short** board,Move mov1, Move mov2);
     void placeStones(const Move stone, int color, pNode checknode);
     bool isNotFull(pNode checknode);
     pNode searchBigUCB(pNode parentNode);
@@ -75,19 +77,19 @@ class Node{
         Node* parent;
         unsigned short int** board;
         Move mov1, mov2;
+    Node(short int curr_color, Node* myparent);//, Move mov1, Move mov2);
+    Node(short int curr_color);
 
-        Node(int curr_color, Node* myparent);//, Move mov1, Move mov2);
-        Node(int curr_color);
-
-        void addC(Node* child);
-        void printC();
-        void printUCB();
-        void printBoard();
-        void printAvailMov();
-        float getUCB();
-        void setUCB(float num);
-        void appendAvailMov(Move mov);
-        void freeNode();
+    void addC(Node* child);
+    void printC();
+    void printUCB();
+    void printBoard();
+    void printAvailMov();
+    float getUCB();
+    void setUCB(float num);
+    void appendAvailMov(Move mov);
+    void freeNode();
 };
 typedef Node* pNode;
+
 */
