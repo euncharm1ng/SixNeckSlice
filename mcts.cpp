@@ -74,8 +74,8 @@ void Mcts::select(pNode rootNode){
         //time_t endTime = clock();
         //time = (endTime - startTime) / double(CLOCKS_PER_SEC);
         i++;
-        if(i == 5000){
-            printf("%d\n", j);
+        if(i == 100){
+            printf("------------------------------------------------%d\n", j);
             i = 0;
             j++;
             time_t endTime = clock();
@@ -98,7 +98,7 @@ void Mcts::expansion(pNode currnode) {
     this->findMoves(currnode);
     int child_color = (currnode->color == BLACK) ? WHITE : BLACK;
     int size = currnode->availMov.size();
-    printf("in expansion %d\n", size);
+    //printf("in expansion %d\n", size);
     Move mov1, mov2;
     for (int i = 0; i < size; i++) {
         mov1 = currnode->availMov[i];
@@ -159,9 +159,11 @@ int Mcts::rollout(pNode currnode){
 // input :
 pNode Mcts::backprop(pNode currNode, int value){//vector<Node> &parent, int updateT){
     while(currNode->parent != NULL){
+        currNode->n += 1;
         currNode->t += value;
         currNode = currNode->parent;
     }
+    currNode->n += 1;
     return currNode;
 }
 
