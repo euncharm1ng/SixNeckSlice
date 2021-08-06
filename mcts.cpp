@@ -28,7 +28,7 @@ todo:
 #include <string.h>
 #include <ctime>
 
-#define DEBUG 0 //to 1 to run in debug mode
+#define DEBUG 1 //to 1 to run in debug mode
 #define BLACK 1
 #define WHITE 2
 #define BOARDSIZE 19
@@ -92,11 +92,10 @@ void appendAvailMove(pNode paraParent, Move mov){
 
 Mcts::Mcts(short **paraBoard, short paraAiColor){
     printf("Mcts constructor\n");
+    this->aiColor = paraAiColor;
     this->board = paraBoard;
     this->root = createNode(paraAiColor);
 }
-
-
 
 void Mcts::select(){
     time_t startTime = clock();
@@ -173,29 +172,33 @@ void Mcts::expansion(pNode currNode) {
 
 // 1 : BLACK win, 2 : WHITE win
 int Mcts::rollout(pNode currNode){
-    //int aicolor = this->aiColor;
-    //int usercolor = (aicolor == BLACK) ? WHITE : BLACK;
-    int turn = this->aiColor;//(currNode->color == BLACK) ? BLACK : WHITE;
-    int size = 0;
+    int size = 0, turn = this->aiColor, vicChk = 0;
     vector<Move> availMoves;
     Move mov1, mov2;
-
-    srand(time(NULL));
-
     short boardToRoll[BOARDSIZE][BOARDSIZE];
     short boardToChkMove[BOARDSIZE][BOARDSIZE];
+
+    srand(time(NULL));
 
     // board to roll: 
     for(int i =0; i< 19; i++){
         for(int j =0; j < 19; j++)
-            board[i][j] = this->board[i][j];
+            boardToRoll[i][j] = this->board[i][j];
     }
     int k = currNode->moveSize;
     for(int i =0; i< k; i+=2){ //TODO: gotta handle the case with black place 1 stone only
-        board[currNode->movesLog[i].y][currNode->movesLog[i].x] = turn;    
-        board[currNode->movesLog[i+1].y][currNode->movesLog[i+1].x] = turn; 
+        boardToRoll[currNode->movesLog[i].y][currNode->movesLog[i].x] = turn;    
+        boardToRoll[currNode->movesLog[i+1].y][currNode->movesLog[i+1].x] = turn; 
         turn = (turn == BLACK) ? WHITE : BLACK; 
     }
+#ifdef DEBUG
+    printf("DEBUG MODE: rollout(): ===============\n");
+    for(int i =0; i< 19; i++){
+        for(int j =0; j < 19; j++)
+            printf("%d ", boardToRoll[i][j]);
+        printf("\n");
+    }
+#endif
 
     // board to check move: 
     for(int i =0; i< 19; i++){
@@ -208,13 +211,15 @@ int Mcts::rollout(pNode currNode){
     }
     for(int i =0; i < 19; i++){
         for(int j =0 ; j <19; j++){
-            int ksmall = (i - MOVRANGE < 0) ? 0 : i - MOVRANGE;
-            int kbig = (i + MOVRANGE + 1 > 19) ? 19 : i + MOVRANGE + 1;
-            int lsmall = (j - MOVRANGE < 0) ? 0 : j - MOVRANGE;
-            int lbig = (j + MOVRANGE + 1 > 19) ? 19 : j + MOVRANGE + 1;
-            for(int k = ksmall; k < kbig; k++){
-                for(int l = lsmall; l < lbig; l++){
-                    boardToChkMove[k][l] *= 1.5;
+            if(boardToChkMove[i][j] == 0){
+                int ksmall = (i - MOVRANGE < 0) ? 0 : i - MOVRANGE;
+                int kbig = (i + MOVRANGE + 1 > 19) ? 19 : i + MOVRANGE + 1;
+                int lsmall = (j - MOVRANGE < 0) ? 0 : j - MOVRANGE;
+                int lbig = (j + MOVRANGE + 1 > 19) ? 19 : j + MOVRANGE + 1;
+                for(int k = ksmall; k < kbig; k++){
+                    for(int l = lsmall; l < lbig; l++){
+                        boardToChkMove[k][l] *= 1.5;
+                    }
                 }
             }
         }
@@ -230,6 +235,13 @@ int Mcts::rollout(pNode currNode){
             }
         }
     }
+
+#ifdef DEBUG
+    printf("DEBUG MODE: rollout() -> printAvailMoves() ===============\n");
+    this->printAvailMoves(availMoves);
+    int cnt =0;
+#endif
+
     turn = currNode->color;
     do{
         random_shuffle(availMoves.begin(), availMoves.end());
@@ -241,7 +253,25 @@ int Mcts::rollout(pNode currNode){
         boardToRoll[temp2.y][temp2.x] = turn;
         turn = (turn == WHITE)? BLACK : WHITE;
 
-        //chkVic();
+#ifdef DEBUG
+    printf("\nDEBUG MODE: rollout(): do while cnt: %d===============\n", cnt);
+    for(int i =0; i< 19; i++){
+        for(int j =0; j < 19; j++)
+            printf("%d ", boardToRoll[i][j]);
+        printf("\n");
+    }
+    cnt++;
+#endif
+
+        vicChk = this->chkVic(boardToRoll, temp1, temp2);
+        if(vicChk){
+#ifdef DEBUG
+    printf("DEBUG MODE: rollout(): ===============\n");
+    printf("winner: %d move: x:%2d y:%2d, x:%2d y:%2d \n", vicChk, temp1.x, temp1.y, temp2.x, temp2.y);
+#endif
+            if(vicChk == this->aiColor) return 1;
+            else return -1;
+        }
 
         //update board to check move
         int ksmall = (temp1.y - MOVRANGE < 0) ? 0 : temp1.y - MOVRANGE;
@@ -275,45 +305,6 @@ int Mcts::rollout(pNode currNode){
         }
     }while(availMoves.size() > 0);
     return 0;
-
-
-    // this->findMoves(currNode);
-    // mov1 = currNode->availMov[rand()%(size)];
-    // do {
-    //     mov2 = currNode->availMov[rand()%(size)];
-    // }while(mov1.x == mov2.x && mov1.y == mov2.y);
-    
-    // //pNode tempnode = createNode(currnode->color, currnode, )//new Node(1, currnode);
-    // pNode tempNode = createNode(currNode->color);
-    // do {
-    //     tempNode->availMov.clear();
-    //     vector <Move>().swap(tempnode->availMov);
-    //     this->findMoves(tempnode);
-    //     size = tempnode->availMov.size();
-    //     if(size == 0) break;
-    //     turn = (turn == BLACK) ? WHITE : BLACK;
-    //     mov1 = tempnode->availMov[rand()%(size)];
-    //     do {
-    //         mov2 = tempnode->availMov[rand()%(size)];
-    //     }while(mov1.x == mov2.x && mov1.y == mov2.y);
-    //     this->placeStones(mov1, turn, tempnode);
-    //     this->placeStones(mov2, turn, tempnode);
-    //     if(chkVic(tempnode)) {
-    //         #if DEBUG
-    //         tempnode->printBoard();
-    //         #endif
-    //         //currnode->setUCB(20);
-    //         delete tempnode;
-    //         return 20;
-    //     }
-    //     //if(chkVic(tempnode)==aicolor) return 20;
-    //     //else if(return 5;
-    // }while(1);
-    // //tempnode->printBoard();
-    // //currnode->setUCB(10);
-
-    // delete tempnode;
-    // return 10;
 }
 
 //(update ucb, t of ancestor node for root)
@@ -354,8 +345,8 @@ float Mcts::calcUCB(pNode node){
 }
 
 void Mcts::findMoves(pNode currNode){
-    short tempBoard[BOARDSIZE][BOARDSIZE];
-    short board[BOARDSIZE][BOARDSIZE];
+    short tempBoard[BOARDSIZE][BOARDSIZE]; //score board
+    short board[BOARDSIZE][BOARDSIZE]; // stone board
 
     for(int i =0; i< 19; i++){
         for(int j =0; j < 19; j++)
@@ -389,6 +380,10 @@ void Mcts::findMoves(pNode currNode){
         }
     }
 
+#if DEBUG
+    printf("DEBUG MODE: findMovs():-----------------\n");
+#endif
+
     for (int i = 0; i < 19; i++) {
         for (int j = 0; j < 19; j++) {
 #if DEBUG
@@ -406,7 +401,8 @@ void Mcts::findMoves(pNode currNode){
 #endif
     }
 #if DEBUG
-    node->printAvailMov();
+    printf("DEBUG MODE: findMoves() -> printAvailMoves()-----------------\n");
+    this->printAvailMoves(currNode->availMov);
 #endif
 }
 
@@ -424,195 +420,26 @@ void Mcts::chkTime() {
 
 }
 
+void Mcts::printAvailMoves(vector<Move> availMov){
+    int i = 0;
+    for(Move temp : availMov){
+        printf("x:%2d y:%2d\t", temp.x, temp.y);
+        i++;
+        if(i % 10 == 0) printf("\n");
+    }
+}
 
-/*
-int Mcts::chkVic(pNode node){
-    int color = 0, cnt = 0;
-#if DEBUG == 2
-    printf("dir1---------\n");
-#endif
-    // dir1 horizontal
-    for(short i = 0; i < 19; i++){
-        for(short j = 0; j < 19; j++){
-            if (node->board[i][j]){
-                color = node->board[i][j];
-                while (j < 19 && color == node->board[i][j]) {
-                    cnt++;
-                    j++;
-                }
-#if DEBUG == 2
-                printf("outside while, cnt = %d, i = %d, j = %d\n", cnt, i, j);
-#endif
-                if (cnt > 5) {
-#if DEBUG == 2
-                    printf("found winner\n");
-#endif 
-                    return color;
-                }
-                else {
-                    cnt = 0;
-                    j--;
-                }
-            }
-        }
-    } // enf of dir1
-#if DEBUG == 2
-    printf("dir2---------\n");
-#endif
-    // dir2 vertical
-    for (int j = 0; j < 19; j++) {
-        for (int i = 0; i < 19; i++) {
-            if (node->board[i][j]) {
-                color = node->board[i][j];
-                while (i < 19 && color == node->board[i][j]) {
-                    cnt++;
-                    i++;
-                }
-#if DEBUG == 2
-                printf("outside while, cnt = %d, i = %d, j = %d\n", cnt, i, j);
-#endif
-                if (cnt > 5) {
-#if DEBUG == 2
-                    printf("found winner\n");
-#endif 
-                    return color;
-                }
-                else {
-                    cnt = 0;
-                    i--;
-                }
-            }
-        }
-    }// end of dir2
-#if DEBUG == 2
-    printf("dir3---------\n");
-#endif
-    // dir3 diag top left to bot right
-    for (int k = 0; k < 14; k++) {
-        int i = k, j = 0;
-        while (i < 19) {
-            if (node->board[i][j]) {
-                color = node->board[i][j];
-                while (i < 19 && color == node->board[i][j]) {
-                    cnt++;
-                    i++;
-                    j++;
-                }
-#if DEBUG == 2
-                printf("outside while, cnt = %d, i = %d, j = %d\n", cnt, i, j);
-#endif
-                if (cnt > 5) {
-#if DEBUG == 2
-                    printf("found winner\n");
-#endif 
-                    return color;
-                }
-                else {
-                    cnt = 0;
-                    continue;
-                }
-            }
-            j++;
-            i++;
-        }
-    }// end of dir3 pt1
+int Mcts::chkVic(short board[][BOARDSIZE], Move mov1, Move mov2) {
 
-    for (int k = 1; k < 14; k++) {
-        int j = k, i = 0;
-        while (j < 19) {
-            if (node->board[i][j]) {
-                color = node->board[i][j];
-                while (j < 19 && color == node->board[i][j]) {
-                    cnt++;
-                    i++;
-                    j++;
-                }
-#if DEBUG == 2
-                printf("outside while, cnt = %d, i = %d, j = %d\n", cnt, i, j);
+#ifdef DEBUG
+    printf("\nDEBUG MODE: chkVic(): ===============\n");
+    for(int i =0; i< 19; i++){
+        for(int j =0; j < 19; j++)
+            printf("%d ", board[i][j]);
+        printf("\n");
+    }
 #endif
-                if (cnt > 5) {
-#if DEBUG == 2
-                    printf("found winner\n");
-#endif 
-                    return color;
-                }
-                else {
-                    cnt = 0;
-                    continue;
-                }
-            }
-            j++;
-            i++;
-        }
-    }// end of dir3 pt2
-#if DEBUG == 2
-    printf("dir4---------\n");
-#endif
-    // dir4 diag top right to bot left
-    for (int k = 5; k < 19; k++) {
-        int j = k, i = 0;
-        while (j > -1) {
-            if (node->board[i][j]) {
-                color = node->board[i][j];
-                while (j > -1 && color == node->board[i][j]) {
-                    cnt++;
-                    i++;
-                    j--;
-                }
-#if DEBUG == 2
-                printf("outside while, cnt = %d, i = %d, j = %d\n", cnt, i, j);
-#endif
-                if (cnt > 5) {
-#if DEBUG == 2
-                    printf("found winner\n");
-#endif 
-                    return color;
-                }
-                else {
-                    cnt = 0;
-                    continue;
-                }
-            }
-            i++;
-            j--;
-        }
-    }// end of dir4 pt1
-    for (int k = 1; k < 14; k++) {
-        int i = k, j = 18;
-        while (i < 19) {
-            if (node->board[i][j]) {
-                color = node->board[i][j];
-                while (i < 19 && color == node->board[i][j]) {
-                    cnt++;
-                    i++;
-                    j--;
-                }
-#if DEBUG == 2
-                printf("outside while, cnt = %d, i = %d, j = %d\n", cnt, i, j);
-#endif
-                if (cnt > 5) {
-#if DEBUG == 2
-                    printf("found winner\n");
-#endif 
-                    return color;
-                }
-                else {
-                    cnt = 0;
-                    continue;
-                }
-            }
-            i++;
-            j--;
-        }
-    }// end of dir4 pt2
-#if DEBUG == 2
-    printf("end of chkvic()\n");
-#endif
-    return 0;
-}// end of chkVic()
-*/
 
-int Mcts::chkVic(unsigned short** board, Move mov1, Move mov2) {
     int count = 0;
     short color = board[mov1.y][mov1.x];
 
@@ -807,56 +634,3 @@ pNode Mcts::returnMov(){
     return toReturn;
 }
 
-void GUI::printBoard() {
-#if DEBUG
-    printf("print board\n");
-#endif
-    for (int i = 0; i < 19; i++) {
-        for (int j = 0; j < 19; j++) {
-            if(this->board[i][j] == 1) printf("○");
-            else if (this->board[i][j] == 2) printf("●");
-            else printf("＃");
-            printf("%s", C_NRML);
-        }
-        printf("\n");
-    }
-#if DEBUG
-    printf("end of print board\n");
-#endif
-}
-
-
-/*
-expand root and rollout all child
- 1:
-//우리가 rollout 하는 node는 expansion이 된다.
-select: (currnode = currnode.biggestchild)
-    check for child.empty()
-        if empty - expansion ->> rollout random ->> backprop
-        if not empty - choose biggest child ->> jump to select
-
-2:
-//모든 node가 expansion이 되지 않는다.
-select: (currnode = currnode.biggestchild)
-    check for child.empty()
-        if empty - expansion ->> rollout random ->> backprop
-        if not empty - choose biggest child ->
-            if biggest child's ucb == INFI - rollout child ->> backprop
-            else - jump to select jump to select
-*/
-
-//자식 노드들 중 제일 큰 거 선택 
-//if(child가 없다){
-//      expansion()
-//      child node 들 중 하나 rollout & backprop
-//      올라가기
-// }
-//else(있다) {
-//     if(모든 ucb 값들이 무한이 아니다){
-//              ucb 값 들 중 큰 거 선택
-//     }
-//     else {
-//      ucb 값 들 중 무한인 거 rollout & backprop
-//      올라가기
-//     }
-// }

@@ -49,7 +49,6 @@ class Mcts{
 
     Mcts(short **paraBoard, short paraAiColor);
 
-
     float calcUCB(pNode node);
     void expansion(pNode currnode);
     pNode backprop(pNode currNode, short value);
@@ -59,37 +58,10 @@ class Mcts{
     int ifBigger(int num);
     int ifSmaller(int num);
     void chkTime();
-    int chkVic(unsigned short** board,Move mov1, Move mov2);
+    int chkVic(short board[][BOARDSIZE], Move mov1, Move mov2);
     void placeStones(const Move stone, int color, pNode checknode);
     bool isNotFull(pNode checknode);
     pNode searchBigUCB(pNode parentNode);
     pNode returnMov();
+    void printAvailMoves(vector<Move> availMov);
 };
-
-
-/*
-class Node{
-    public:
-        short t, n, color;
-        float ucb;
-        vector<Node*> children;
-        vector<Move> availMov;
-        Node* parent;
-        unsigned short int** board;
-        Move mov1, mov2;
-    Node(short int curr_color, Node* myparent);//, Move mov1, Move mov2);
-    Node(short int curr_color);
-
-    void addC(Node* child);
-    void printC();
-    void printUCB();
-    void printBoard();
-    void printAvailMov();
-    float getUCB();
-    void setUCB(float num);
-    void appendAvailMov(Move mov);
-    void freeNode();
-};
-typedef Node* pNode;
-
-*/

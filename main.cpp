@@ -16,10 +16,41 @@ int main(){
         for(int j = 0; j < BOARDSIZE; j++) board[i][j] = 0;
     }
     board[10][10] = 1;
+    // board[9][10] = 1;
+    // board[8][10] = 1;
+    // board[6][10] = 1;
+    // board[9][11] = 1;
+
+    // board[9][7] = 2;
+    // board[8][8] = 2;
+    // board[8][9] = 2;
+    // board[7][9] = 2;
     Mcts m = Mcts(board, WHITE);
 
+    m.root->movesLog = (pMove)malloc(sizeof(Move)*8);
+    m.root->moveSize = 8;
+
+    m.root->movesLog[0] = {7, 9};
+    m.root->movesLog[1] = {8, 8};
+
+    m.root->movesLog[2] = {10, 9};
+    m.root->movesLog[3] = {10, 8};
+
+    m.root->movesLog[4] = {9, 8};
+    m.root->movesLog[5] = {9, 7};
+
+    m.root->movesLog[6] = {10, 6};
+    m.root->movesLog[7] = {11, 9};
+
+    
+    
+
     printf("before select\n");
-    m.select();
+    //m.select();
+    // m.findMoves(m.root);
+    //int chk = m.rollout(m.root);
+    m.expansion(m.root); // TODO:
+    printf("%d\n", chk);
     printf("after select\n");
 
     // Move start2 = {9,10};
@@ -108,6 +139,7 @@ int main(){
     */
 
 }
+
 
 
 
