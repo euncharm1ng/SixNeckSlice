@@ -28,7 +28,7 @@ todo:
 #include <string.h>
 #include <ctime>
 
-#define DEBUG 1 //to 1 to run in debug mode
+#define DEBUG 0 //to 1 to run in debug mode
 #define BLACK 1
 #define WHITE 2
 #define BOARDSIZE 19
@@ -49,6 +49,7 @@ pNode createNode(short paraColor){
     newNode->ucb = INFI;
     newNode->parent = NULL;
     newNode->movesLog = (pMove)malloc(1);
+    newNode->children = new vector<pNode>(0);
     return newNode;
 }
 
@@ -70,25 +71,25 @@ pNode createNode(short paraColor, pNode paraParent, Move mov1, Move mov2){
     newNode->movesLog[k++].y = mov1.y;
     newNode->movesLog[k].x = mov2.x;
     newNode->movesLog[k].y = mov2.y;
+    newNode->children = new vector<pNode>(0);
+
+    //newNode->children.push_back(paraParent);
+    //printf("working?\n");
     return newNode;
 }
 
 void freeNode(pNode paraNode){
     free(paraNode->movesLog);
-    paraNode->children.clear();
-    paraNode->children.shrink_to_fit();
-    paraNode->availMov.clear();
-    paraNode->availMov.shrink_to_fit();
+    paraNode->children->clear();
+    paraNode->children->shrink_to_fit();
+    free(paraNode->children);
     free(paraNode);
 }
 
 void addC(pNode paraParent, pNode paraChild){
-    paraParent -> children.push_back(paraChild);
+    (paraParent -> children)->push_back(paraChild);
 }
 
-void appendAvailMove(pNode paraParent, Move mov){
-    paraParent->availMov.push_back(mov);
-}
 
 Mcts::Mcts(short **paraBoard, short paraAiColor){
     printf("Mcts constructor\n");
@@ -97,7 +98,7 @@ Mcts::Mcts(short **paraBoard, short paraAiColor){
     this->root = createNode(paraAiColor);
 }
 
-void Mcts::select(){
+pNode Mcts::runGame(){
     time_t startTime = clock();
     float time = 0;
     short value = 0;
@@ -105,73 +106,99 @@ void Mcts::select(){
 
 
     this->expansion(this->root);
-    printf("end of 1st expansion with size: %d\n", this->root->children.size());
-
-    for(pNode child : this->root->children){
+    printf("end of 1st expansion with size: %d\n", this->root->children->size());
+ 
+    vector<pNode> &iter = *(this->root->children);
+    pNode child = NULL;
+    for(pNode child : iter){
         value = this->rollout(child);
-        //printf("value : %d", value);
         this->backprop(child, value);
-        //printf("print ROOTNODE->N(VISIT) : %d\n", rootNode->n);
         this->expansion(child);
     }
     printf("end of 2nd expansion\n");
 
-    pNode tempnode = NULL;
+    pNode tempNode = NULL;
     do {
-        tempnode = this->root;
+        tempNode = this->root;
         do{
-            tempnode = this->searchBigUCB(tempnode);
-        }while(!tempnode->children.empty()); 
- 
-        value = this->rollout(tempnode);
-        this->backprop(tempnode, value);
-        //this->expansion(tempnode);
+            tempNode = this->select(tempNode);
+        }while(!tempNode->children->empty()); 
+        if(tempNode->n != 0){
+            this->expansion(tempNode);
+            tempNode = this->select(tempNode);
+        } 
+        value = this->rollout(tempNode);
+        this->backprop(tempNode, value);
 
-        i++;
-        if (i == 100) {
+        if (i++ == 5000) {
             printf("------------------------------------------------%d\n", j);
-            //i = 0;
             j++;
+            i = 0;
+
             // time_t endTime = clock();
             // time = (endTime - startTime) / double(CLOCKS_PER_SEC);
             // if(time > 20) break;
         }
-    }while(j<100);//time < 20);
+    }while(j<30);//time < 20);
     time_t endTime = clock();
     time = (endTime - startTime) / double(CLOCKS_PER_SEC);
     printf("time: %f\n", time);
     printf("%d runs\n", 5000*j);
 
-    //pNode result = this->searchBigUCB(rootNode);
+
     pNode result = this->returnMov();
-    printf("result print board\n");
-    //result->printBoard();
+    int turn = this->aiColor;
+    short boardToPrint[BOARDSIZE][BOARDSIZE];
+    for(int i =0; i< 19; i++){
+        for(int j =0; j < 19; j++)
+            boardToPrint[i][j] = this->board[i][j];
+    }
+    int k = result->moveSize;
+    for(int i =0; i< k; i+=2){ //TODO: gotta handle the case with black place 1 stone only
+        boardToPrint[result->movesLog[i].y][result->movesLog[i].x] = turn;    
+        boardToPrint[result->movesLog[i+1].y][result->movesLog[i+1].x] = turn; 
+        turn = (turn == BLACK) ? WHITE : BLACK; 
+    }
+    for(int i =0; i< 19; i++){
+        for(int j =0; j < 19; j++)
+            printf("%d ", boardToPrint[i][j]);
+        printf("\n");
+    }
+    return result;
 }
 
 void Mcts::expansion(pNode currNode) {
-    int child_color = (currNode->color == BLACK) ? WHITE : BLACK;
-    int size = currNode->availMov.size();
+    short child_color = (currNode->color == BLACK) ? WHITE : BLACK;
+    int moveSize = 0;
     Move mov1, mov2;
+    vector<Move> availMoves;
 
-    this->findMoves(currNode);
-    for (int i = 0; i < size; i++) {
-        mov1 = currNode->availMov[i];
-        for (int j = i + 1; j < size; j++) {
-            mov2 = currNode->availMov[j];
+    this->findMoves(currNode, availMoves);
+
+    moveSize = availMoves.size();
+#if DEBUG
+    printf("DEBUG MODE expansion(): movesize: %d\n", moveSize);
+#endif
+
+    for (int i = 0; i < moveSize; i++) {
+        mov1 = availMoves[i];
+        for (int j = i + 1; j < moveSize; j++) {
+            mov2 = availMoves[j];
             pNode tempNode = createNode(child_color, currNode, mov1, mov2);
-            //this->placeStones(mov1, child_color, tempnode);
-            //this->placeStones(mov2, child_color, tempnode);
-            //currnode->addC(tempnode);
             addC(currNode, tempNode);
         }
     }
-    currNode->availMov.clear();
-    currNode->availMov.resize(0);
-    currNode->availMov.shrink_to_fit();
+#if DEBUG
+    printf("currnode -> children.size: %d, avail move size: %d\n", currNode->children.size(), moveSize);
+#endif
+    currNode->children->shrink_to_fit();
 }
 
 // 1 : BLACK win, 2 : WHITE win
 int Mcts::rollout(pNode currNode){
+#if DEBUG
+    time_t startTime = clock();
+#endif
     int size = 0, turn = this->aiColor, vicChk = 0;
     vector<Move> availMoves;
     Move mov1, mov2;
@@ -191,7 +218,7 @@ int Mcts::rollout(pNode currNode){
         boardToRoll[currNode->movesLog[i+1].y][currNode->movesLog[i+1].x] = turn; 
         turn = (turn == BLACK) ? WHITE : BLACK; 
     }
-#ifdef DEBUG
+#if DEBUG
     printf("DEBUG MODE: rollout(): ===============\n");
     for(int i =0; i< 19; i++){
         for(int j =0; j < 19; j++)
@@ -236,7 +263,7 @@ int Mcts::rollout(pNode currNode){
         }
     }
 
-#ifdef DEBUG
+#if DEBUG
     printf("DEBUG MODE: rollout() -> printAvailMoves() ===============\n");
     this->printAvailMoves(availMoves);
     int cnt =0;
@@ -253,7 +280,7 @@ int Mcts::rollout(pNode currNode){
         boardToRoll[temp2.y][temp2.x] = turn;
         turn = (turn == WHITE)? BLACK : WHITE;
 
-#ifdef DEBUG
+#if DEBUG
     printf("\nDEBUG MODE: rollout(): do while cnt: %d===============\n", cnt);
     for(int i =0; i< 19; i++){
         for(int j =0; j < 19; j++)
@@ -265,8 +292,10 @@ int Mcts::rollout(pNode currNode){
 
         vicChk = this->chkVic(boardToRoll, temp1, temp2);
         if(vicChk){
-#ifdef DEBUG
-    printf("DEBUG MODE: rollout(): ===============\n");
+#if DEBUG
+    time_t endTime = clock();
+    float time = (endTime - startTime) / double(CLOCKS_PER_SEC);
+    printf("DEBUG MODE: rollout(): =============== %f sec\n", time);
     printf("winner: %d move: x:%2d y:%2d, x:%2d y:%2d \n", vicChk, temp1.x, temp1.y, temp2.x, temp2.y);
 #endif
             if(vicChk == this->aiColor) return 1;
@@ -319,14 +348,15 @@ pNode Mcts::backprop(pNode currNode, short value){//vector<Node> &parent, int up
     return currNode;
 }
 
-pNode Mcts::searchBigUCB(pNode parentNode) {
+pNode Mcts::select(pNode parentNode) {
     float max = -100, chk = 0;
     pNode returnNode = NULL;
     short parentN = parentNode->n;
 
-    random_shuffle(parentNode->children.begin(), parentNode->children.end());
-
-    for(pNode tempNode : parentNode->children) {
+    random_shuffle(parentNode->children->begin(), parentNode->children->end());
+    vector<pNode> &iter = *(parentNode->children);
+    for (pNode tempNode : iter){
+    //for(pNode tempNode : parentNode->children) {
         if(tempNode->n ==0) return tempNode;
         //chk = this->calcUCB(tempNode);
         chk = (tempNode->t / tempNode->n) + 2*(sqrt(log(parentN)/tempNode->n));
@@ -344,7 +374,7 @@ float Mcts::calcUCB(pNode node){
     return node->ucb;
 }
 
-void Mcts::findMoves(pNode currNode){
+void Mcts::findMoves(pNode currNode, vector<Move> &availMoves){
     short tempBoard[BOARDSIZE][BOARDSIZE]; //score board
     short board[BOARDSIZE][BOARDSIZE]; // stone board
 
@@ -393,7 +423,8 @@ void Mcts::findMoves(pNode currNode){
                 Move tempMove;
                 tempMove.x = (short) j;
                 tempMove.y = (short) i;
-                appendAvailMove(currNode, tempMove);
+                availMoves.push_back(tempMove);
+                //appendAvailMove(currNode, tempMove);
             }
         }
 #if DEBUG
@@ -402,7 +433,7 @@ void Mcts::findMoves(pNode currNode){
     }
 #if DEBUG
     printf("DEBUG MODE: findMoves() -> printAvailMoves()-----------------\n");
-    this->printAvailMoves(currNode->availMov);
+    //this->printAvailMoves(currNode->availMov);
 #endif
 }
 
@@ -431,7 +462,7 @@ void Mcts::printAvailMoves(vector<Move> availMov){
 
 int Mcts::chkVic(short board[][BOARDSIZE], Move mov1, Move mov2) {
 
-#ifdef DEBUG
+#if DEBUG
     printf("\nDEBUG MODE: chkVic(): ===============\n");
     for(int i =0; i< 19; i++){
         for(int j =0; j < 19; j++)
@@ -613,6 +644,7 @@ int Mcts::chkVic(short board[][BOARDSIZE], Move mov1, Move mov2) {
 
     return 0;
 }
+
 /*
 void Mcts::placeStones(const Move stone, short int color, pNode checknode) {
     checknode->board[stone.y][stone.x] = color;
@@ -623,9 +655,10 @@ void Mcts::placeStones(const Move stone, short int color, pNode checknode) {
 pNode Mcts::returnMov(){
     float max = -1, value = 0;
     pNode toReturn = NULL, rootNode = this->root;
-    for(pNode child : rootNode->children){
+    vector<pNode> &iter = *(rootNode->children);
+    for (pNode child : iter){
+    //for(pNode child : rootNode->children){
         value = float(child->t) / float(child->n);
-        printf("vlaue: %f\n", value);
         if (max < value) {
             max = value;
             toReturn = child;

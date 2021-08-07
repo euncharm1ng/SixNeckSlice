@@ -24,8 +24,8 @@ bool comp(Move mov1, Move mov2);
 typedef struct Node{
     short t, n, color, moveSize; //the color to place to the board that yet not placed
     float ucb;
-    vector<Node*> children;
-    vector<Move> availMov;
+    vector<Node*> *children;
+    //vector<Move> availMov;
     Node* parent;
     pMove movesLog;
 } Node;
@@ -52,8 +52,8 @@ class Mcts{
     float calcUCB(pNode node);
     void expansion(pNode currnode);
     pNode backprop(pNode currNode, short value);
-    void select();
-    void findMoves(pNode node);
+    pNode runGame();
+    void findMoves(pNode node, vector<Move> &availMoves);
     int rollout(pNode currnode);
     int ifBigger(int num);
     int ifSmaller(int num);
@@ -61,7 +61,7 @@ class Mcts{
     int chkVic(short board[][BOARDSIZE], Move mov1, Move mov2);
     void placeStones(const Move stone, int color, pNode checknode);
     bool isNotFull(pNode checknode);
-    pNode searchBigUCB(pNode parentNode);
+    pNode select(pNode parentNode);
     pNode returnMov();
     void printAvailMoves(vector<Move> availMov);
 };

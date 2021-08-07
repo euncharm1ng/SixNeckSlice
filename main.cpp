@@ -4,11 +4,14 @@
 #include <time.h>
 #include "mcts.h"
 #define WHITE 2
+#define BLACK 2
 
 #define INFI 3e10
 using namespace std;
 
 int main(){
+
+
 
     short **board = (short**)malloc(sizeof(short*)*BOARDSIZE);
     for (int i =0; i< BOARDSIZE; i++){
@@ -48,10 +51,26 @@ int main(){
     printf("before select\n");
     //m.select();
     // m.findMoves(m.root);
-    //int chk = m.rollout(m.root);
-    m.expansion(m.root); // TODO:
-    printf("%d\n", chk);
+    // int chk = m.rollout(m.root);
+    // printf("%d\n", chk);
+    //m.expansion(m.root); // TODO:
+    pNode result = m.runGame();
+
+    
     printf("after select\n");
+
+    int turn = m.aiColor;
+    short boardToPrint[BOARDSIZE][BOARDSIZE];
+    for(int i =0; i< 19; i++){
+        for(int j =0; j < 19; j++)
+            boardToPrint[i][j] = m.board[i][j];
+    }
+    int k = result->moveSize;
+    for(int i =0; i< k; i+=2){ //TODO: gotta handle the case with black place 1 stone only
+        boardToPrint[result->movesLog[i].y][result->movesLog[i].x] = turn;    
+        boardToPrint[result->movesLog[i+1].y][result->movesLog[i+1].x] = turn; 
+        turn = (turn == BLACK) ? WHITE : BLACK; 
+    }
 
     // Move start2 = {9,10};
     // Move start3 = {8,10};
