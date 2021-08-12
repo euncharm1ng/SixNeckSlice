@@ -43,8 +43,9 @@ class Mcts{
     int rollout(pNode currnode);
     pNode backprop(pNode currNode, short value);
     
-    void findMoves(pNode node, vector<Move> &availMoves);
+    void findMoves(pNode currNode, vector<Move> &oneGridAway, vector<Move> &availMoves);
     int chkVic(short board[][BOARDSIZE], Move mov1, Move mov2);
     pNode returnMov();
     void printAvailMoves(vector<Move> availMov);
+    void findMovesOneGrid(short board[][BOARDSIZE], vector<Move> &moveVec, int tagToAvoid);
 };
