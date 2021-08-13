@@ -16,8 +16,9 @@ typedef Move* pMove;
 bool comp(Move mov1, Move mov2);
 
 typedef struct Node{
-    short t, n, color, moveSize; //the color to place to the board that yet not placed
-    float ucb;
+    short color, moveSize; //the color to place to the board that yet not placed
+    int n;
+    float mean, t, prevMax;
     vector<Node*> *children;
     Node* parent;
     pMove movesLog;
@@ -40,8 +41,8 @@ class Mcts{
     pNode runGame();
     pNode select(pNode parentNode);
     void expansion(pNode currnode);
-    int rollout(pNode currnode);
-    pNode backprop(pNode currNode, short value);
+    float rollout(pNode currnode);
+    void backprop(pNode currNode, float value);
     
     void findMoves(pNode currNode, vector<Move> &oneGridAway, vector<Move> &availMoves);
     int chkVic(short board[][BOARDSIZE], Move mov1, Move mov2);
