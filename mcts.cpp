@@ -30,9 +30,10 @@ todo:
 #define MOVRANGE 2
 #define TIMELIMIT 20
 #define INFI 3e10
+
 #define ROLLWINVAL 1
-#define ROLLLOSEVAL -2
-#define UCBMULT 3.5
+#define ROLLLOSEVAL -1.5
+#define UCBMULT 8.9
 
 
 #define RED "\033[31m"
@@ -45,7 +46,7 @@ todo:
 
 using namespace std;
 
-static int nodeCnt = 0;
+//static int nodeCnt = 0;
 
 pNode createNode(short paraColor){
     pNode newNode = (pNode)malloc(sizeof(Node));
@@ -58,11 +59,12 @@ pNode createNode(short paraColor){
     newNode->parent = NULL;
     newNode->movesLog = (pMove)malloc(1);
     newNode->children = new vector<pNode>(0);
+    newNode->prevSel = NULL;
     return newNode;
 }
 
 pNode createNode(short paraColor, pNode paraParent, Move mov1, Move mov2){
-    nodeCnt++;
+    //nodeCnt++;
     pNode newNode = (pNode)malloc(sizeof(Node));
     newNode->t = 0;
     newNode->n = 0;
@@ -82,6 +84,7 @@ pNode createNode(short paraColor, pNode paraParent, Move mov1, Move mov2){
     newNode->movesLog[k].x = mov2.x;
     newNode->movesLog[k].y = mov2.y;
     newNode->children = new vector<pNode>(0);
+    newNode->prevSel = NULL;
     return newNode;
 }
 
@@ -111,7 +114,7 @@ pNode Mcts::runGame(){
     pNode treeRoot = this->root;
 
     this->expansion(treeRoot);
-    printf("end of 1st expansion with size: %dm nodecnt: %d\n", treeRoot->children->size(), nodeCnt);
+    //printf("end of 1st expansion with size: %dm nodecnt: %d\n", treeRoot->children->size(), nodeCnt);
     
     vector<pNode> &iter = *(treeRoot->children);
     pNode child = NULL;
@@ -121,28 +124,35 @@ pNode Mcts::runGame(){
         this->expansion(child);
         random_shuffle(child->children->begin(), child->children->end());
     }
-    printf("end of 2nd expansion nodeCnt: %d\n", nodeCnt);
+    //printf("end of 2nd expansion nodeCnt: %d\n", nodeCnt);
     pNode tempNode;
     random_shuffle(treeRoot->children->begin(), treeRoot->children->end());
+    printf("calculating... ");
     do {
         tempNode = treeRoot;
         do{
             tempNode = this->select(tempNode);
         }while(!tempNode->children->empty()); 
-
+        //expansion()?
         value = this->rollout(tempNode);
         this->backprop(tempNode, value);
 
+
         
         if (i++ == 5000) {
-            printf("------------------------------------------------%d with nodeCnt: %d\n", j, nodeCnt);
+            // printf("------------------------------------------------%d with nodeCnt: %d\n", j, nodeCnt);
+            if(j%4 == 0) printf("\b-");
+            else if(j%4 == 1) printf("\b\\");
+            else if(j%4 == 2) printf("\b|");
+            else if(j%4 == 3) printf("\b/");
             j++; i = 0;
         }
-    }while(j<200);//time < 20);
+    }while(j<40);//time < 20);
     time_t endTime = clock();
     time = (endTime - startTime) / double(CLOCKS_PER_SEC);
+    printf("\n");
     printf("time: %f\n", time);
-    printf("%d runs\n", 5000*j);
+    printf("%d runs\n", 50000*j);
 
 
     pNode result = this->returnMov();
@@ -170,6 +180,7 @@ pNode Mcts::runGame(){
 }// end of runGame()
 
 pNode Mcts::select(pNode parentNode) {
+    if(parentNode->prevSel != NULL) return parentNode->prevSel;
     float max = -100, chk = 0;
     pNode returnNode = NULL;
     float parentN = log((float)parentNode->n);
@@ -185,6 +196,7 @@ pNode Mcts::select(pNode parentNode) {
             returnNode = tempNode;
         }
     }
+    parentNode->prevSel = returnNode;
     return returnNode;
 }// end of select()
 
@@ -243,6 +255,7 @@ float Mcts::rollout(pNode currNode){
         boardToRoll[currNode->movesLog[i+1].y][currNode->movesLog[i+1].x] = turn; 
         turn = (turn == BLACK) ? WHITE : BLACK; 
     }
+    //findmoves() -> vector 
     for(short i =0; i< 19; i++){
         for(short j =0; j < 19; j++)
             if(!boardToRoll[i][j]){
@@ -311,8 +324,10 @@ void Mcts::backprop(pNode currNode, float value){
         currNode->t += value;
         currNode->mean = currNode->t / (float)currNode->n;
         currNode = currNode->parent;
+        if(value == ROLLLOSEVAL) currNode->prevSel = NULL;
     }
     currNode->n += 1;
+    if(value == ROLLLOSEVAL) currNode->prevSel = NULL;
     //return currNode;
 }// end of backprop()
 
@@ -322,7 +337,6 @@ void Mcts::findMovesOneGrid(short board[][BOARDSIZE], vector<Move> &moveVec, int
     for(int i = 0; i < 19; i++){
         for(int j = 0; j < 19; j++){
             if(board[i][j] > 0 && board[i][j] < tagToAvoid){
-                
                 if(i == 0)
                     iMinus = 0;
                 else if ( i == 18)

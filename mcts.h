@@ -10,7 +10,7 @@
 using namespace std;
 
 typedef struct Move {
-    short int x, y;
+    short x, y;
 }Move;
 typedef Move* pMove;
 bool comp(Move mov1, Move mov2);
@@ -20,7 +20,7 @@ typedef struct Node{
     int n;
     float mean, t, prevMax;
     vector<Node*> *children;
-    Node* parent;
+    Node* parent, *prevSel;
     pMove movesLog;
 } Node;
 typedef Node* pNode;
