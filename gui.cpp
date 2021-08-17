@@ -1,61 +1,95 @@
-#include<stdio.h>
- 
-void draw_check01(int column, int row);
- 
+#include<cstdio>
+#include "mcts.h"
+#include <iostream>
+
+#define WHITE 2
+#define BLACK 1
+
+
+void freeAll(pNode currnode);
+
+int freeCount;
+
 int main(void)
 {
-    printf("바둑판\n");
-    int row = 19, column = 19;
-    draw_check01(column, row);
- 
-    return 0;
-}
- 
-void draw_check01(int c, int r)
-{
-    int i, j;
-    unsigned char a=0xa6;
-    unsigned char b[12];
- 
-    for(i=1;i<12;i++)
-        b[i]=0xa0+i;
-    printf("%c%c", a, b[3]);
- 
-    for(i=0;i<c-1;i++)
-        printf("%c%c", a, b[8]);
-    printf("%c%c", a, b[4]);
-    printf("\n");
-   
-    for(i=0;i<r-1;i++)
-    {
-        printf("%c%c", a, b[7]);
-        for(j=0;j<c-1;j++)
-            printf("%c%c", a, b[11]);
-        printf("%c%c", a, b[9]);
-        printf("\n");
+
+    freeCount = 0;
+
+    Move mov1, mov2;
+    short temp = 0, win = 0;
+    short aiColor=0, userColor=0;
+
+    short** board = (short**)malloc(sizeof(short*) * BOARDSIZE);
+    for (int i = 0; i < BOARDSIZE; i++) {
+        board[i] = (short*)malloc(sizeof(short) * BOARDSIZE);
+        for (int j = 0; j < BOARDSIZE; j++) board[i][j] = 0;
     }
-    printf("%c%c", a, b[6]);
-    for(i=0;i<c-1;i++)
-        printf("%c%c", a, b[10]);
-    printf("%c%c", a, b[5]);
-    printf("\n");
-}
-/*
-void GUI::printBoard() {
-#if DEBUG
-    printf("print board\n");
-#endif
-    for (int i = 0; i < 19; i++) {
-        for (int j = 0; j < 19; j++) {
-            if(this->board[i][j] == 1) printf("○");
-            else if (this->board[i][j] == 2) printf("●");
-            else printf("＃");
-            printf("%s", C_NRML);
+
+    printf("Choose your color (BLACK is '1', WHITE is '2'): ");
+    scanf("%hd", &userColor);
+    aiColor = (userColor == BLACK) ? WHITE : BLACK;
+    printf("Then AiColor is %hd\n", aiColor);
+    
+    if (aiColor == BLACK) {
+        board[10][10] = aiColor;
+        printf("AI place first stone!!!\n");
+    }
+
+    do {
+        printf("First stone : ");
+        temp = scanf("%hd %hd", &mov1.x, &mov1.y);
+        board[mov1.y][mov1.x] = userColor;
+
+        printf("Second stone : ");
+        temp = scanf("%hd %hd", &mov2.x, &mov2.y);
+        board[mov2.y][mov2.x] = userColor;
+
+        Mcts m = Mcts(board, aiColor);
+
+        
+        if (win = m.chkVic(board, mov1, mov2)) {
+
+            if (win == aiColor) {
+                printf("AI Win!!!\n");
+                break;
+            }
+            else {
+                printf("User Win!!!\n");
+                break;
+            }
+
         }
-        printf("\n");
-    }
-#if DEBUG
-    printf("end of print board\n");
-#endif
+        
+
+        pNode result = m.runGame();
+
+        board[result->movesLog[0].y][result->movesLog[0].x] = aiColor;
+        board[result->movesLog[1].y][result->movesLog[1].x] = aiColor;
+
+        printf("children size : %d\n", m.root->children->size());
+
+        freeAll(m.root);
+
+        printf("freeCount : %d\n", --freeCount);
+
+        freeCount = 0;
+
+    } while (1);
+
 }
-*/
+
+void freeAll(pNode currnode) {
+
+    freeCount++;
+
+    if (currnode->children->empty()) return;
+
+    do {
+        freeAll(currnode->children->back());
+        freeNode(currnode->children->back());
+        currnode->children->pop_back();
+    } while (!currnode->children->empty());
+
+    return;
+
+}
