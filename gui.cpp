@@ -12,8 +12,16 @@ int freeCount;
 
 int main(void)
 {
-
-    freeCount = 0;
+    
+    // int * temparr = NULL;
+    // temparr = (int*)malloc(sizeof(int) * 10);
+    // printf("%p\n", temparr);
+    // temparr[0] = 1;
+    // free(temparr);
+    // printf("%p %d\n", temparr, sizeof(temparr));
+    // temparr[0] = 2;
+    // printf("%d\n", temparr[0]);
+    // freeCount = 0;
 
     Move mov1, mov2;
     short temp = 0, win = 0;
@@ -69,6 +77,7 @@ int main(void)
         printf("children size : %d\n", m.root->children->size());
 
         freeAll(m.root);
+        // freeNode(m.root);
 
         printf("freeCount : %d\n", --freeCount);
 
@@ -79,16 +88,24 @@ int main(void)
 }
 
 void freeAll(pNode currnode) {
-
-    freeCount++;
-
-    if (currnode->children->empty()) return;
-
-    do {
+    
+    while(!currnode->children->empty()){
         freeAll(currnode->children->back());
-        freeNode(currnode->children->back());
         currnode->children->pop_back();
-    } while (!currnode->children->empty());
+    }
+    // freeCount++;
+
+    // if (currnode->children->empty()){ 
+    //     freeNode(currnode);
+    //     return;
+    // }
+
+    // do {
+    //     freeAll(currnode->children->back());
+    //     // freeNode(currnode->children->back());
+    //     currnode->children->pop_back();
+    // } while (!currnode->children->empty());
+    freeNode(currnode);
 
     return;
 
