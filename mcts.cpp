@@ -87,10 +87,21 @@ pNode createNode(short paraColor, pNode paraParent, Move mov1, Move mov2) {
 
 void freeNode(pNode paraNode) {
     free(paraNode->movesLog);
+    
+    for (int i = 0; i < paraNode->children->size(); i++) {
+        delete &(paraNode->children[i]);
+    }
+
+    /*
     paraNode->children->clear();
     paraNode->children->shrink_to_fit();
     free(paraNode->children);
     free(paraNode);
+    */
+
+    delete paraNode->children;
+    delete paraNode;
+    
 }
 
 void addC(pNode paraParent, pNode paraChild) {
@@ -307,10 +318,25 @@ float Mcts::rollout(pNode currNode) {
             printf("winner: %d move: x:%2d y:%2d, x:%2d y:%2d \n", vicChk, temp1.x, temp1.y, temp2.x, temp2.y);
 #endif
 
-            if (vicChk == this->aiColor) return ROLLWINVAL;
-            else return ROLLLOSEVAL;
+            if (vicChk == this->aiColor) {
+                for (int i = 0; i < BOARDSIZE; i++) {
+                    free(boardToRoll[i]);
+                }
+                free(boardToRoll);
+                return ROLLWINVAL;
+            }
+            else {
+                for (int i = 0; i < BOARDSIZE; i++) {
+                    free(boardToRoll[i]);
+                }
+                free(boardToRoll);
+                return ROLLLOSEVAL;
+            }
         }
     } while (availMoves.size() > 0);
+    for (int i = 0; i < BOARDSIZE; i++) {
+        free(boardToRoll[i]);
+    }
     free(boardToRoll);
     return 0;
 }// end of rollout()
