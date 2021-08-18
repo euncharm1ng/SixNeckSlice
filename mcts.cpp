@@ -99,11 +99,22 @@ void freeNode(pNode paraNode) {
     // delete paraNode->movesLog;
     free(paraNode->movesLog);
     
+    for (int i = 0; i < paraNode->children->size(); i++) {
+        delete &(paraNode->children[i]);
+    }
+
+    /*
+    paraNode->children->clear();
     paraNode->children->shrink_to_fit();
     delete paraNode->children;
     // free(paraNode->children);
     
     free(paraNode);
+    */
+
+    delete paraNode->children;
+    delete paraNode;
+    
 }
 
 void addC(pNode paraParent, pNode paraChild) {
@@ -298,11 +309,23 @@ float Mcts::rollout(pNode currNode) {
             }
             free(boardToRoll);
 
-            if (vicChk == this->aiColor) return ROLLWINVAL;
-            else return ROLLLOSEVAL;
+            if (vicChk == this->aiColor) {
+                for (int i = 0; i < BOARDSIZE; i++) {
+                    free(boardToRoll[i]);
+                }
+                free(boardToRoll);
+                return ROLLWINVAL;
+            }
+            else {
+                for (int i = 0; i < BOARDSIZE; i++) {
+                    free(boardToRoll[i]);
+                }
+                free(boardToRoll);
+                return ROLLLOSEVAL;
+            }
         }
     } while (availMoves.size() > 0);
-    for(int i =0; i < BOARDSIZE; i++){
+    for (int i = 0; i < BOARDSIZE; i++) {
         free(boardToRoll[i]);
     }
     free(boardToRoll);
