@@ -136,7 +136,7 @@ pNode Mcts::runGame() {
 
     this->expansion(treeRoot);
 
-    printf("end of 1st expansion with size: %dm nodecnt: %d\n", treeRoot->children->size(), nodeCnt);
+    printf("end of 1st expansion with size: %lum nodecnt: %d\n", treeRoot->children->size(), nodeCnt);
     
     vector<pNode> &iter = *(treeRoot->children);
 
