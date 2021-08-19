@@ -15,11 +15,11 @@ typedef struct Move {
 typedef Move* pMove;
 bool comp(Move mov1, Move mov2);
 
-typedef struct Node{
+typedef struct Node {
     short color, moveSize; //the color to place to the board that yet not placed
     int n;
     float mean, t, prevMax;
-    vector<Node*> *children;
+    vector<Node*>* children;
     Node* parent;
     pMove movesLog;
 } Node;
@@ -30,23 +30,23 @@ pNode createNode(short paraColor, pNode paraParent, Move mov1, Move mov2);
 void freeNode(pNode paraNode);
 void addC(pNode paraParent, pNode paraChild);
 
-class Mcts{
-    public:
+class Mcts {
+public:
     short** board;
     pNode root;
     short aiColor;
 
-    Mcts(short **paraBoard, short paraAiColor);
+    Mcts(short** paraBoard, short paraAiColor);
 
     pNode runGame();
     pNode select(pNode parentNode);
     void expansion(pNode currnode);
     float rollout(pNode currnode);
     void backprop(pNode currNode, float value);
-    
-    void findMoves(pNode currNode, vector<Move> &oneGridAway, vector<Move> &availMoves);
-    int chkVic(short board[][BOARDSIZE], Move mov1, Move mov2);
+
+    void findMoves(pNode currNode, vector<Move>& oneGridAway, vector<Move>& availMoves);
+    int chkVic(short** board, Move mov1, Move mov2);
     pNode returnMov();
     void printAvailMoves(vector<Move> availMov);
-    void findMovesOneGrid(short board[][BOARDSIZE], vector<Move> &moveVec, int tagToAvoid);
+    void findMovesOneGrid(short board[][BOARDSIZE], vector<Move>& moveVec, int tagToAvoid);
 };
