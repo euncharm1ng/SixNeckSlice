@@ -144,8 +144,8 @@ pNode Mcts::runGame() {
     for (pNode child : iter) {
         value = this->rollout(child);
         this->backprop(child, value);
-        this->expansion(child);
-        random_shuffle(child->children->begin(), child->children->end());
+        // this->expansion(child);
+        // random_shuffle(child->children->begin(), child->children->end());
     }
     printf("end of 2nd expansion nodeCnt: %d\n", nodeCnt);
     pNode tempNode;
@@ -153,15 +153,14 @@ pNode Mcts::runGame() {
     printf("calculating... ");
     do {
         tempNode = treeRoot;
-        do {
+        // do {
             tempNode = this->select(tempNode);
-        }while(!tempNode->children->empty()); 
-        //expansion()?
+        // }while(!tempNode->children->empty()); 
 
         value = this->rollout(tempNode);
         this->backprop(tempNode, value);
-        if (i++ == 500) {
-            // printf("------------------------------------------------%d with nodeCnt: %d\n", j, nodeCnt);
+        if (i++ == 5000) {
+            printf("------------------------------------------------%d with nodeCnt: %d\n", j, nodeCnt);
             if(j%4 == 0) printf("\b-");
             else if(j%4 == 1) printf("\b\\");
             else if(j%4 == 2) printf("\b|");
@@ -169,12 +168,12 @@ pNode Mcts::runGame() {
             j++; i = 0;
         }
 
-    }while(j<1);//time < 20);
+    }while(j<20);//time < 20);
     time_t endTime = clock();
     time = (endTime - startTime) / double(CLOCKS_PER_SEC);
     printf("\n");
     printf("time: %f\n", time);
-    printf("%d runs\n", 50000*j);
+    printf("%d runs\n", 5000*j);
 
 
     // nodeCnt = 0;
@@ -220,7 +219,7 @@ pNode Mcts::select(pNode parentNode) {
             returnNode = tempNode;
         }
     }
-    parentNode->prevSel = returnNode;
+    // parentNode->prevSel = returnNode;
     return returnNode;
 }// end of select()
 
@@ -309,20 +308,10 @@ float Mcts::rollout(pNode currNode) {
             }
             free(boardToRoll);
 
-            if (vicChk == this->aiColor) {
-                for (int i = 0; i < BOARDSIZE; i++) {
-                    free(boardToRoll[i]);
-                }
-                free(boardToRoll);
+            if (vicChk == this->aiColor) 
                 return ROLLWINVAL;
-            }
-            else {
-                for (int i = 0; i < BOARDSIZE; i++) {
-                    free(boardToRoll[i]);
-                }
-                free(boardToRoll);
+            else 
                 return ROLLLOSEVAL;
-            }
         }
     } while (availMoves.size() > 0);
     for (int i = 0; i < BOARDSIZE; i++) {
@@ -338,10 +327,10 @@ void Mcts::backprop(pNode currNode, float value) {
         currNode->t += value;
         currNode->mean = currNode->t / (float)currNode->n;
         currNode = currNode->parent;
-        if(value == ROLLLOSEVAL) currNode->prevSel = NULL;
+        // if(value == ROLLLOSEVAL) currNode->prevSel = NULL;
     }
     currNode->n += 1;
-    if(value == ROLLLOSEVAL) currNode->prevSel = NULL;
+    // if(value == ROLLLOSEVAL) currNode->prevSel = NULL;
     //return currNode;
 }// end of backprop()
 

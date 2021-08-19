@@ -34,7 +34,7 @@ int main(void)
     }
 
     printf("Choose your color (BLACK is '1', WHITE is '2'): ");
-    scanf_s("%hd", &userColor);
+    scanf("%hd", &userColor);
     aiColor = (userColor == BLACK) ? WHITE : BLACK;
     printf("Then AiColor is %hd\n", aiColor);
     
@@ -45,11 +45,11 @@ int main(void)
 
     do {
         printf("First stone : ");
-        temp = scanf_s("%hd %hd", &mov1.x, &mov1.y);
+        temp = scanf("%hd %hd", &mov1.x, &mov1.y);
         board[mov1.y][mov1.x] = userColor;
 
         printf("Second stone : ");
-        temp = scanf_s("%hd %hd", &mov2.x, &mov2.y);
+        temp = scanf("%hd %hd", &mov2.x, &mov2.y);
         board[mov2.y][mov2.x] = userColor;
 
         Mcts m = Mcts(board, aiColor);
@@ -97,10 +97,20 @@ int main(void)
 }
 
 void freeAll(pNode currnode) {
+
+    if (currnode->children->empty()) return;
+
+    do {
+        freeAll(currnode->children->back());
+        freeNode(currnode->children->back());
+        currnode->children->pop_back();
+    } while (!currnode->children->empty());
+
+    return;
     
     while(!currnode->children->empty()){
         freeAll(currnode->children->back());
-        currnode->children->pop_back();
+        // currnode->children->pop_back();
     }
     // freeCount++;
 
