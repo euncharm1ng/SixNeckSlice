@@ -24,30 +24,14 @@ todo:
 #define DEBUG 0 //to 1 to run in debug mode
 #define DEBUGVIC 0 //chkVic()
 #define DEBUGROLL 0 //rollout()
-
-
 #define MOVRANGE 2
 #define TIMELIMIT 20
-
-
-
 // #define ROLLWINVAL 1
 // #define ROLLLOSEVAL -1.5
 // #define UCBMULT 8.9
-
 #define ROLLWINVAL 10
 #define ROLLLOSEVAL -20
 #define UCBMULT 5.0
-
-
-
-#define RED "\033[31m"
-#define GREEN "\033[32m"
-#define YELLOW "\033[33m"
-#define BLUE "\033[34m"
-#define PURPLE "\033[35m"
-#define CYAN "\033[36m"
-#define NORM "\033[37m"
 
 using namespace std;
 
@@ -98,19 +82,26 @@ createNode(short paraColor, pNode paraParent, Move mov1, Move mov2)
     return newNode;
 }
 
+void*
+freeAll (void* inputNode) 
+{
+    pNode currNode = (pNode) inputNode;
+    while(!currNode->children->empty()){
+        freeAll(currNode->children->back());
+        currNode->children->pop_back();
+    }
+    freeNode(currNode);
+    return NULL;
+}
+
 void 
 freeNode(pNode paraNode) 
 {
-    // delete paraNode->movesLog;
     free(paraNode->movesLog);
-    
-    for (int i = 0; i < paraNode->children->size(); i++) {
+    for (int i = 0; i < paraNode->children->size(); i++)
         delete &(paraNode->children[i]);
-    }
-
     delete paraNode->children;
-    delete paraNode;
-    
+    free(paraNode);
 }
 
 void 
@@ -125,6 +116,7 @@ Mcts::Mcts(short** paraBoard, short paraAiColor)
     this->board = paraBoard;
     this->root = createNode(paraAiColor);
 }
+
 Mcts::Mcts(){}
 
 void 
@@ -132,6 +124,7 @@ Mcts::setRoot(short paraAiColor)
 {
     this->root = createNode(paraAiColor);
 }
+
 pNode 
 Mcts::runGame() 
 {
@@ -139,76 +132,46 @@ Mcts::runGame()
     float time = 0;
     short value = 0;
     int i = 0, j = 0;
-    pNode treeRoot = this->root;
+    pNode treeRoot = this->root, tempNode;
+    // pNode tempNode;
 
     this->expansion(treeRoot);
-
     printf("end of 1st expansion with size: %lum nodecnt: %d\n", treeRoot->children->size(), nodeCnt);
     
     vector<pNode> &iter = *(treeRoot->children);
-
     pNode child = NULL;
     for (pNode child : iter) {
         value = this->rollout(child);
         this->backprop(child, value);
-        // this->expansion(child);
-        // random_shuffle(child->children->begin(), child->children->end());
+        this->expansion(child);
+        random_shuffle(child->children->begin(), child->children->end());
     }
     printf("end of 2nd expansion nodeCnt: %d\n", nodeCnt);
-    pNode tempNode;
     random_shuffle(treeRoot->children->begin(), treeRoot->children->end());
-    printf("calculating... ");
+    
     do {
         tempNode = treeRoot;
-        // do {
+        do {
             tempNode = this->select(tempNode);
-        // }while(!tempNode->children->empty()); 
+        }while(!tempNode->children->empty()); 
 
         value = this->rollout(tempNode);
         this->backprop(tempNode, value);
         if (i++ == 5000) {
-            printf("------------------------------------------------%d with nodeCnt: %d\n", j, nodeCnt);
-            if(j%4 == 0) printf("\b-");
-            else if(j%4 == 1) printf("\b\\");
-            else if(j%4 == 2) printf("\b|");
-            else if(j%4 == 3) printf("\b/");
+            printf("------------------------------------------------%2d with nodeCnt: %d\n", j, nodeCnt);
+            // if(j%4 == 0) printf("%d\r", j);
+            // else if(j%4 == 1) printf("\\%d\r", j);
+            // else if(j%4 == 2) printf("|%d\r", j);
+            // else if(j%4 == 3) printf("/%d\r", j);
             j++; i = 0;
         }
 
     }while(j<20);//time < 20);
     time_t endTime = clock();
     time = (endTime - startTime) / double(CLOCKS_PER_SEC);
-    printf("\n");
-    printf("time: %f\n", time);
-    printf("%d runs\n", 5000*j);
-
-
-    // nodeCnt = 0;
+    printf("%d runs took: %f sec\n\n", 5000 * j, time);
 
     pNode result = this->returnMov();
-    return result;
-    puts("here");
-    int turn = this->aiColor;
-    short boardToPrint[BOARDSIZE][BOARDSIZE];
-    for (int i = 0; i < 19; i++) {
-        for (int j = 0; j < 19; j++)
-            boardToPrint[i][j] = this->board[i][j];
-    }
-    puts("guessing here");
-    int k = result->moveSize;
-    for (int i = 0; i < k; i += 2) { //TODO: gotta handle the case with black place 1 stone only
-        boardToPrint[result->movesLog[i].y][result->movesLog[i].x] = turn;
-        boardToPrint[result->movesLog[i + 1].y][result->movesLog[i + 1].x] = turn;
-        turn = (turn == BLACK) ? WHITE : BLACK;
-    }
-    for (int i = 0; i < 19; i++) {
-        for (int j = 0; j < 19; j++) {
-            if (boardToPrint[i][j] == 1) printf(RED "o " NORM);
-            else if (boardToPrint[i][j] == 2) printf("o ");
-            else printf(YELLOW "+ " NORM);
-        }
-        printf("\n");
-    }
     return result;
 }// end of runGame()
 

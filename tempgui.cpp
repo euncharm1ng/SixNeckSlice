@@ -2,12 +2,13 @@
 #include<cstdio>
 #include "mcts.h"
 #include <iostream>
+#include <pthread.h>
 
 int freeCount;
 short** guiBoard;
 short aiColor, userColor;
-Move mov1, mov2;
 Mcts m;
+pthread_t freer;
 
 void 
 initGUI ()
@@ -24,8 +25,26 @@ initGUI ()
     }while(userColor < 0 && userColor > 3);
     aiColor = (userColor == BLACK) ? WHITE : BLACK;
     printf("Then AiColor is %hd\n", aiColor);
+    setRedStone();
 
     m = Mcts(guiBoard, aiColor);
+}
+
+void 
+setRedStone()
+{
+    int redCnt = 0;
+    Move redStone;
+    printf("input the number of red stone to place: ");
+    scanf("%d", &redCnt);
+    for(int i =0; i< redCnt; i++){
+        printf("%dth red stone: ", i);
+        scanf("%hd %hd", &redStone.x, &redStone.y);
+        if(!chkBoundary(redStone)) 
+            i--;
+        else 
+            placeStone(redStone, OBSTACLE);
+    }
 }
 
 void
@@ -35,7 +54,7 @@ aiPlayFirst ()
     guiBoard[10][10] = aiColor;
 }
 
-/*return 1 for valid input*/
+
 int 
 chkBoundary (Move inputMove)
 {
@@ -49,6 +68,7 @@ chkBoundary (Move inputMove)
 void 
 userPlayFirst ()
 {
+    Move mov1;
     do{
         printf("input the first move: ");
         scanf("%hd %hd", &mov1.x, &mov1.y);
@@ -56,18 +76,20 @@ userPlayFirst ()
     placeStone(mov1, userColor);
 }
 
-/*return 1 on success return -1 for placing stone in occupied location*/
+
 int
 placeStone (Move inputMove, short inputColor)
 {
-    if(guiBoard[inputMove.y][inputMove.x] != 0 ) return -1;
+    if(guiBoard[inputMove.y][inputMove.x] != 0) return -1;
     guiBoard[inputMove.y][inputMove.x] = inputColor;
     return 1;
 }
 
-void 
+int 
 receiveUserInput ()
 {
+    Move mov1, mov2;
+    printBoard();
     do{
         printf("input the first move: ");
         scanf("%hd %hd", &mov1.x, &mov1.y);
@@ -77,36 +99,43 @@ receiveUserInput ()
     printf("placing stones: \n");
     placeStone(mov1, userColor);
     placeStone(mov2, userColor);
+
+    if (m.chkVic(guiBoard, mov1, mov2))
+        return 1;
+    else return 0;
 }
+
 void 
 printBoard()
 {
+    puts("y\\x 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8");
     for (int i = 0; i < 19; i++) {
+        printf("  %d ", i%10);
         for (int j = 0; j < 19; j++) {
-            if (guiBoard[i][j] == 1) printf(RED "o " NORM);
-            else if (guiBoard[i][j] == 2) printf("o ");
+            if (guiBoard[i][j] == BLACK) printf(CYAN "o " NORM);
+            else if (guiBoard[i][j] == WHITE) printf("o ");
+            else if (guiBoard[i][j] == OBSTACLE) printf(RED "o " NORM);
             else printf(YELLOW "+ " NORM);
         }
         printf("\n");
     }
 }
-void 
-aiPlays () 
+
+int 
+aiPlays() 
 {
-    puts("in aiplays()");
     pNode result = m.runGame();
-    puts("in aiplays()");
-    guiBoard[result->movesLog[0].y][result->movesLog[0].x] = aiColor;
-    guiBoard[result->movesLog[1].y][result->movesLog[1].x] = aiColor;
-    puts("aiplays here");
-    printBoard();
-    puts("aiplays here");
-    freeAll(m.root);
-    puts("aiplays here");
-    freeNode(m.root);
-    puts("aiplays here");
+
+    
+    placeStone(result->movesLog[0], aiColor);
+    placeStone(result->movesLog[1], aiColor);
+    int chkWin = m.chkVic(guiBoard, result->movesLog[0], result->movesLog[1]);
+
+    // printBoard();
+    // freeAll(m.root);
+    pthread_create(&freer, NULL, freeAll, m.root);
     m.setRoot(aiColor);
-    puts("aiplays here");
+    return chkWin;    
 }
 
 
@@ -120,19 +149,19 @@ runGUI()
         userPlayFirst();
         aiPlays();
     }
-    else aiPlayFirst();
+    else{ 
+        aiPlayFirst();
+        printBoard();
+    }
 
     do{
-        receiveUserInput();
-        if (m.chkVic(guiBoard, mov1, mov2)){
-            printf("user win\n"); 
+        if(receiveUserInput()){
+            puts("user wins");
             break;
-        } 
-        printf("chked user\n");
-
-        aiPlays();
-    }while(m.chkVic(guiBoard, mov1, mov2) != 0);
-
+        }
+    }while(aiPlays() == 0);
+    printBoard();
+    puts("end of game");
 }
 /*
 int 
@@ -200,19 +229,3 @@ main ()
 }
 */
 
-void 
-freeAll (pNode currnode) 
-{
-    if (currnode->children->empty()){ 
-        free(currnode->movesLog);
-        delete currnode->children;
-        delete currnode;
-        return;
-    }
-
-    do {
-        freeAll(currnode->children->back());
-        freeNode(currnode->children->back()); //?
-        currnode->children->pop_back();
-    } while (!currnode->children->empty());
-}
