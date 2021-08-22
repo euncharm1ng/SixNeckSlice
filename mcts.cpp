@@ -26,16 +26,18 @@ todo:
 #define DEBUGROLL 0 //rollout()
 #define MOVRANGE 2
 #define TIMELIMIT 20
-// #define ROLLWINVAL 1
-// #define ROLLLOSEVAL -1.5
-// #define UCBMULT 8.9
-#define ROLLWINVAL 10
-#define ROLLLOSEVAL -20
-#define UCBMULT 5.0
+#define ROLLWINVAL 1
+#define ROLLLOSEVAL -10
+#define UCBMULT 15
+// #define ROLLWINVAL 10
+// #define ROLLLOSEVAL -20
+// #define UCBMULT 5.0
 
 using namespace std;
 
 static int nodeCnt = 0;
+static float rollTime = 0;
+static float selTime = 0;
 
 pNode 
 createNode(short paraColor) 
@@ -104,20 +106,16 @@ freeNode(pNode paraNode)
     free(paraNode);
 }
 
-void 
-addC(pNode paraParent, pNode paraChild) 
-{
-    paraParent->children->push_back(paraChild);
-}
 
+/*---------- class mcts ----------*/
+
+Mcts::Mcts(){}
 Mcts::Mcts(short** paraBoard, short paraAiColor) 
 {
     this->aiColor = paraAiColor;
     this->board = paraBoard;
     this->root = createNode(paraAiColor);
 }
-
-Mcts::Mcts(){}
 
 void 
 Mcts::setRoot(short paraAiColor)
@@ -133,7 +131,6 @@ Mcts::runGame()
     short value = 0;
     int i = 0, j = 0;
     pNode treeRoot = this->root, tempNode;
-    // pNode tempNode;
 
     this->expansion(treeRoot);
     printf("end of 1st expansion with size: %lum nodecnt: %d\n", treeRoot->children->size(), nodeCnt);
@@ -158,11 +155,7 @@ Mcts::runGame()
         value = this->rollout(tempNode);
         this->backprop(tempNode, value);
         if (i++ == 5000) {
-            printf("------------------------------------------------%2d with nodeCnt: %d\n", j, nodeCnt);
-            // if(j%4 == 0) printf("%d\r", j);
-            // else if(j%4 == 1) printf("\\%d\r", j);
-            // else if(j%4 == 2) printf("|%d\r", j);
-            // else if(j%4 == 3) printf("/%d\r", j);
+            printf("---------%2d with nodeCnt: %d\n", j, nodeCnt);
             j++; i = 0;
         }
 
@@ -170,15 +163,19 @@ Mcts::runGame()
     time_t endTime = clock();
     time = (endTime - startTime) / double(CLOCKS_PER_SEC);
     printf("%d runs took: %f sec\n\n", 5000 * j, time);
-
+    printf("sel took : %f sec\n", selTime);
+    printf("roll took : %f sec\n", rollTime);
     pNode result = this->returnMov();
+    nodeCnt= 0;
+    selTime = 0;
+    rollTime = 0;
     return result;
 }// end of runGame()
 
 pNode 
 Mcts::select(pNode parentNode) 
 {
-    // if(parentNode->prevSel != NULL) return parentNode->prevSel;
+    time_t start = clock();
     float max = -100, chk = 0;
     pNode returnNode = NULL;
     float parentN = log((float)parentNode->n);
@@ -194,7 +191,8 @@ Mcts::select(pNode parentNode)
             returnNode = tempNode;
         }
     }
-    // parentNode->prevSel = returnNode;
+    time_t end = clock(); 
+    selTime += (end - start) / double(CLOCKS_PER_SEC);
     return returnNode;
 }// end of select()
 
@@ -219,12 +217,14 @@ Mcts::expansion(pNode currNode)
         for (int j = i + 1; j < gridMoveSize; j++) {
             mov2 = oneGridAway[j];
             tempNode = createNode(child_color, currNode, mov1, mov2);
-            addC(currNode, tempNode);
+            currNode->children->push_back(tempNode);
+            // addC(currNode, tempNode);
         }
         for (int j = 0; j < availMoveSize; j++) {
             mov2 = availMoves[j];
             tempNode = createNode(child_color, currNode, mov1, mov2);
-            addC(currNode, tempNode);
+            currNode->children->push_back(tempNode);
+            // addC(currNode, tempNode);
         }
     }
 #if DEBUG
@@ -236,12 +236,12 @@ Mcts::expansion(pNode currNode)
 float 
 Mcts::rollout(pNode currNode) 
 {
+    time_t start = clock();
 #if DEBUGROLL
     time_t startTime = clock();
 #endif
     int size = 0, turn = this->aiColor, vicChk = 0;
     vector<Move> availMoves;
-    //short boardToRoll[BOARDSIZE][BOARDSIZE];
     short** boardToRoll = (short**)malloc(sizeof(short*) * BOARDSIZE);
     for (int i = 0; i < BOARDSIZE; i++) {
         boardToRoll[i] = (short*)malloc(sizeof(short) * BOARDSIZE);
@@ -256,9 +256,19 @@ Mcts::rollout(pNode currNode)
             boardToRoll[i][j] = this->board[i][j];
     }
     int k = currNode->moveSize;
-    for (int i = 0; i < k; i += 2) { //TODO: gotta handle the case with black place 1 stone only
+    for (int i = 0; i < k; i += 2) { //TODO: gotta handle the case with black place 1 stone only, gotta check the moveslog too
         boardToRoll[currNode->movesLog[i].y][currNode->movesLog[i].x] = turn;
         boardToRoll[currNode->movesLog[i + 1].y][currNode->movesLog[i + 1].x] = turn;
+        if(vicChk = chkVic(boardToRoll, currNode->movesLog[i], currNode->movesLog[i+1])){
+            for(int i =0; i < BOARDSIZE; i++){
+                free(boardToRoll[i]);
+            }
+            free(boardToRoll);
+            time_t end = clock(); 
+            rollTime += (end - start) / double(CLOCKS_PER_SEC);
+            if(vicChk == this->aiColor) return ROLLWINVAL;
+            else return ROLLLOSEVAL;
+        }
         turn = (turn == BLACK) ? WHITE : BLACK;
     }
     for (short i = 0; i < 19; i++) {
@@ -286,6 +296,8 @@ Mcts::rollout(pNode currNode)
                 free(boardToRoll[i]);
             }
             free(boardToRoll);
+            time_t end = clock(); 
+            rollTime += (end - start) / double(CLOCKS_PER_SEC);
 
             if (vicChk == this->aiColor) 
                 return ROLLWINVAL;
@@ -293,10 +305,13 @@ Mcts::rollout(pNode currNode)
                 return ROLLLOSEVAL;
         }
     } while (availMoves.size() > 0);
+
     for (int i = 0; i < BOARDSIZE; i++) {
         free(boardToRoll[i]);
     }
     free(boardToRoll);
+    time_t end = clock(); 
+    rollTime += (end - start) / double(CLOCKS_PER_SEC);
     return 0;
 }// end of rollout()
 
@@ -308,11 +323,8 @@ Mcts::backprop(pNode currNode, float value)
         currNode->t += value;
         currNode->mean = currNode->t / (float)currNode->n;
         currNode = currNode->parent;
-        // if(value == ROLLLOSEVAL) currNode->prevSel = NULL;
     }
     currNode->n += 1;
-    // if(value == ROLLLOSEVAL) currNode->prevSel = NULL;
-    //return currNode;
 }// end of backprop()
 
 void 
@@ -370,191 +382,65 @@ Mcts::findMoves(pNode currNode, vector<Move>& oneGridAway, vector<Move>& availMo
     this->findMovesOneGrid(board, availMoves, 5);
 }
 
-void 
-Mcts::printAvailMoves(vector<Move> availMov) 
-{
-    int i = 0;
-    for (Move temp : availMov) {
-        printf("x:%2d y:%2d\t", temp.x, temp.y);
-        i++;
-        if (i % 10 == 0) printf("\n");
-    }
-}
-
 int 
 Mcts::chkVic(short** board, Move mov1, Move mov2) 
 {
     int count = 0;
     short color = board[mov1.y][mov1.x];
+    int movX = mov1.x, movY = mov1.y;
+    for(int loopCnt = 0; loopCnt < 2; loopCnt++){
+        if(loopCnt == 1){
+            movX = mov2.x;
+            movY = mov2.y;
+        }
+        //check vertical
+        for (int j = movX; j < 19 ; j++) {
+            if (board[movY][j] == color) count++;
+            else break;
+        }
+        for (int j = movX; j > -1; j--) {
+            if (board[movY][j] == color) count++;
+            else break;
+        }
+        if (count > 6) return color;
+        count = 0;
 
-    //CHECK MV1
+        //check horizion
+        for (int i = movY; i < 19; i++) {
+            if (board[i][movX] == color) count++;
+            else break;
+        }
+        for (int i = movY; i > -1 ; i--) {
+            if (board[i][movX] == color) count++;
+            else break;
+        }
+        if (count > 6) return color;
+        count = 0;
 
-    //check vertical
-    for (int x = mov1.y, y = mov1.x; ; y++) {
-        if (board[x][y] == color) count++;
-        if (y == 18) break;
-        else {
-            if (board[x][y] == board[x][y + 1]) continue;
+        //check right-up diagonal
+        for (int i = movY, j = movX; i < 19 && j > -1 ; i++, j--) {
+            if (board[i][j] == color) count++;
             else break;
         }
-    }
-    for (int x = mov1.y, y = mov1.x; ; y--) {
-        if (board[x][y] == color) count++;
-        if (y == 0) break;
-        else {
-            if (board[x][y] == board[x][y - 1]) continue;
+        for (int i = movY, j = movX; i > -1 && j < 19 ; i--, j++) {
+            if (board[i][j] == color) count++;
             else break;
         }
-    }
+        if (count > 6) return color;
+        count = 0;
 
-    if (--count > 5) return color;
-    count = 0;
-
-    //check horizion
-    for (int x = mov1.y, y = mov1.x; ; x++) {
-        if (board[x][y] == color) count++;
-        if (x == 18) break;
-        else {
-            if (board[x][y] == board[x + 1][y]) continue;
+        //check left-up diagonal
+        for (int i = movY, j = movX; i > -1 && j > -1; i--, j--) {
+            if (board[i][j] == color) count++;
             else break;
         }
-    }
-    for (int x = mov1.y, y = mov1.x; ; x--) {
-        if (board[x][y] == color) count++;
-        if (x == 0) break;
-        else {
-            if (board[x][y] == board[x - 1][y]) continue;
+        for (int i = movY, j = movX; i < 19 && j < 19 ; i++, j++) {
+            if (board[i][j] == color) count++;
             else break;
         }
+        if (count > 6) return color;
+        count = 0;
     }
-
-    if (--count > 5) return color;
-    count = 0;
-
-    //check right-up diagonal
-    for (int x = mov1.y, y = mov1.x; ; x++, y--) {
-        if (board[x][y] == color) count++;
-        if (x == 18 || y == 0) break;
-        else {
-            if (board[x][y] == board[x + 1][y - 1]) continue;
-            else break;
-        }
-    }
-    for (int x = mov1.y, y = mov1.x; ; x--, y++) {
-        if (board[x][y] == color) count++;
-        if (x == 0 || y == 18) break;
-        else {
-            if (board[x][y] == board[x - 1][y + 1]) continue;
-            else break;
-        }
-    }
-    if (--count > 5) return color;
-    count = 0;
-
-    //check left-up diagonal
-    for (int x = mov1.y, y = mov1.x; ; x--, y--) {
-        if (board[x][y] == color) count++;
-        if (x == 0 || y == 0) break;
-        else {
-            if (board[x][y] == board[x - 1][y - 1]) continue;
-            else break;
-        }
-    }
-    for (int x = mov1.y, y = mov1.x; ; x++, y++) {
-        if (board[x][y] == color) count++;
-        if (x == 18 || y == 18) break;
-        else {
-            if (board[x][y] == board[x + 1][y + 1]) continue;
-            else break;
-        }
-    }
-    if (--count > 5) return color;
-    count = 0;
-
-    //CHECK MV2
-
-    //check vertical
-    for (int x = mov2.y, y = mov2.x; ; y++) {
-        if (board[x][y] == color) count++;
-        if (y == 18) break;
-        else {
-            if (board[x][y] == board[x][y + 1]) continue;
-            else break;
-        }
-    }
-    for (int x = mov2.y, y = mov2.x; ; y--) {
-        if (board[x][y] == color) count++;
-        if (y == 0) break;
-        else {
-            if (board[x][y] == board[x][y - 1]) continue;
-            else break;
-        }
-    }
-
-    if (--count > 5) return color;
-    count = 0;
-
-    //check horizion
-    for (int x = mov2.y, y = mov2.x; ; x++) {
-        if (board[x][y] == color) count++;
-        if (x == 18) break;
-        else {
-            if (board[x][y] == board[x + 1][y]) continue;
-            else break;
-        }
-    }
-    for (int x = mov2.y, y = mov2.x; ; x--) {
-        if (board[x][y] == color) count++;
-        if (x == 0) break;
-        else {
-            if (board[x][y] == board[x - 1][y]) continue;
-            else break;
-        }
-    }
-
-    if (--count > 5) return color;
-    count = 0;
-
-    //check right-up diagonal
-    for (int x = mov2.y, y = mov2.x; ; x++, y--) {
-        if (board[x][y] == color) count++;
-        if (x == 18 || y == 0) break;
-        else {
-            if (board[x][y] == board[x + 1][y - 1]) continue;
-            else break;
-        }
-    }
-    for (int x = mov2.y, y = mov2.x; ; x--, y++) {
-        if (board[x][y] == color) count++;
-        if (x == 0 || y == 18) break;
-        else {
-            if (board[x][y] == board[x - 1][y + 1]) continue;
-            else break;
-        }
-    }
-    if (--count > 5) return color;
-    count = 0;
-
-    //check left-up diagonal
-    for (int x = mov2.y, y = mov2.x; ; x--, y--) {
-        if (board[x][y] == color) count++;
-        if (x == 0 || y == 0) break;
-        else {
-            if (board[x][y] == board[x - 1][y - 1]) continue;
-            else break;
-        }
-    }
-    for (int x = mov2.y, y = mov2.x; ; x++, y++) {
-        if (board[x][y] == color) count++;
-        if (x == 18 || y == 18) break;
-        else {
-            if (board[x][y] == board[x + 1][y + 1]) continue;
-            else break;
-        }
-    }
-    if (--count > 5) return color;
-    count = 0;
-
     return 0;
 }// end of chkVic()
 

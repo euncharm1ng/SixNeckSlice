@@ -25,7 +25,6 @@ typedef struct Move {
     short x, y;
 }Move;
 typedef Move* pMove;
-bool comp(Move mov1, Move mov2);
 
 typedef struct Node {
     short color, moveSize; //the color to place to the board that yet not placed
@@ -41,7 +40,6 @@ pNode createNode(short paraColor);
 pNode createNode(short paraColor, pNode paraParent, Move mov1, Move mov2);
 void* freeAll (void* inputNode);
 void freeNode(pNode paraNode);
-void addC(pNode paraParent, pNode paraChild);
 
 class Mcts {
     public:
@@ -66,7 +64,6 @@ class Mcts {
         */
         int chkVic(short** board, Move mov1, Move mov2);
         pNode returnMov();
-        void printAvailMoves(vector<Move> availMov);
         void findMovesOneGrid(short board[][BOARDSIZE], vector<Move>& moveVec, int tagToAvoid);
 };
 

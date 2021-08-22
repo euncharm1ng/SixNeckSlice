@@ -58,7 +58,7 @@ aiPlayFirst ()
 int 
 chkBoundary (Move inputMove)
 {
-    if(inputMove.x > -1 && inputMove.x < 19 && inputMove.y > -1 & inputMove.y < 19){
+    if(inputMove.x > -1 && inputMove.x < 19 && inputMove.y > -1 && inputMove.y < 19){
         if(guiBoard[inputMove.y][inputMove.x] == 0) return 1;
     }
     printf("invalid input: %d, %d; please retry\n", inputMove.x, inputMove.y);
@@ -125,15 +125,12 @@ int
 aiPlays() 
 {
     pNode result = m.runGame();
-
-    
     placeStone(result->movesLog[0], aiColor);
     placeStone(result->movesLog[1], aiColor);
     int chkWin = m.chkVic(guiBoard, result->movesLog[0], result->movesLog[1]);
 
-    // printBoard();
-    // freeAll(m.root);
     pthread_create(&freer, NULL, freeAll, m.root);
+
     m.setRoot(aiColor);
     return chkWin;    
 }
