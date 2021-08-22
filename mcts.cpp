@@ -54,7 +54,9 @@ using namespace std;
 
 static int nodeCnt = 0;
 
-pNode createNode(short paraColor) {
+pNode 
+createNode(short paraColor) 
+{
     pNode newNode = (pNode)malloc(sizeof(Node));
     newNode->t = 0;
     newNode->n = 0;
@@ -70,7 +72,9 @@ pNode createNode(short paraColor) {
 }
 
 
-pNode createNode(short paraColor, pNode paraParent, Move mov1, Move mov2){
+pNode 
+createNode(short paraColor, pNode paraParent, Move mov1, Move mov2)
+{
     nodeCnt++;
     pNode newNode = (pNode)malloc(sizeof(Node));
     newNode->t = 0;
@@ -95,7 +99,9 @@ pNode createNode(short paraColor, pNode paraParent, Move mov1, Move mov2){
     return newNode;
 }
 
-void freeNode(pNode paraNode) {
+void 
+freeNode(pNode paraNode) 
+{
     // delete paraNode->movesLog;
     free(paraNode->movesLog);
     
@@ -103,31 +109,33 @@ void freeNode(pNode paraNode) {
         delete &(paraNode->children[i]);
     }
 
-    /*
-    paraNode->children->clear();
-    paraNode->children->shrink_to_fit();
-    delete paraNode->children;
-    // free(paraNode->children);
-    
-    free(paraNode);
-    */
-
     delete paraNode->children;
     delete paraNode;
     
 }
 
-void addC(pNode paraParent, pNode paraChild) {
+void 
+addC(pNode paraParent, pNode paraChild) 
+{
     paraParent->children->push_back(paraChild);
 }
 
-Mcts::Mcts(short** paraBoard, short paraAiColor) {
+Mcts::Mcts(short** paraBoard, short paraAiColor) 
+{
     this->aiColor = paraAiColor;
     this->board = paraBoard;
     this->root = createNode(paraAiColor);
 }
+Mcts::Mcts(){}
 
-pNode Mcts::runGame() {
+void 
+Mcts::setRoot(short paraAiColor)
+{
+    this->root = createNode(paraAiColor);
+}
+pNode 
+Mcts::runGame() 
+{
     time_t startTime = clock();
     float time = 0;
     short value = 0;
@@ -179,12 +187,15 @@ pNode Mcts::runGame() {
     // nodeCnt = 0;
 
     pNode result = this->returnMov();
+    return result;
+    puts("here");
     int turn = this->aiColor;
     short boardToPrint[BOARDSIZE][BOARDSIZE];
     for (int i = 0; i < 19; i++) {
         for (int j = 0; j < 19; j++)
             boardToPrint[i][j] = this->board[i][j];
     }
+    puts("guessing here");
     int k = result->moveSize;
     for (int i = 0; i < k; i += 2) { //TODO: gotta handle the case with black place 1 stone only
         boardToPrint[result->movesLog[i].y][result->movesLog[i].x] = turn;
@@ -202,7 +213,9 @@ pNode Mcts::runGame() {
     return result;
 }// end of runGame()
 
-pNode Mcts::select(pNode parentNode) {
+pNode 
+Mcts::select(pNode parentNode) 
+{
     // if(parentNode->prevSel != NULL) return parentNode->prevSel;
     float max = -100, chk = 0;
     pNode returnNode = NULL;
@@ -223,7 +236,9 @@ pNode Mcts::select(pNode parentNode) {
     return returnNode;
 }// end of select()
 
-void Mcts::expansion(pNode currNode) {
+void 
+Mcts::expansion(pNode currNode) 
+{
     short child_color = (currNode->color == BLACK) ? WHITE : BLACK;
     int gridMoveSize = 0, availMoveSize = 0;
     Move mov1, mov2;
@@ -256,7 +271,9 @@ void Mcts::expansion(pNode currNode) {
     currNode->children->shrink_to_fit();
 }// end of expansion()
 
-float Mcts::rollout(pNode currNode) {
+float 
+Mcts::rollout(pNode currNode) 
+{
 #if DEBUGROLL
     time_t startTime = clock();
 #endif
@@ -321,7 +338,9 @@ float Mcts::rollout(pNode currNode) {
     return 0;
 }// end of rollout()
 
-void Mcts::backprop(pNode currNode, float value) {
+void
+Mcts::backprop(pNode currNode, float value) 
+{
     while (currNode->parent != NULL) {
         currNode->n += 1;
         currNode->t += value;
@@ -334,7 +353,9 @@ void Mcts::backprop(pNode currNode, float value) {
     //return currNode;
 }// end of backprop()
 
-void Mcts::findMovesOneGrid(short board[][BOARDSIZE], vector<Move>& moveVec, int tagToAvoid) {
+void 
+Mcts::findMovesOneGrid(short board[][BOARDSIZE], vector<Move>& moveVec, int tagToAvoid) 
+{
     int iPlus = 1, iMinus = 1, jPlus = 1, jMinus = 1;
     Move oneGridMove;
     for(int i = 0; i < 19; i++){
@@ -363,7 +384,9 @@ void Mcts::findMovesOneGrid(short board[][BOARDSIZE], vector<Move>& moveVec, int
     }
 }
 
-void Mcts::findMoves(pNode currNode, vector<Move>& oneGridAway, vector<Move>& availMoves) {
+void 
+Mcts::findMoves(pNode currNode, vector<Move>& oneGridAway, vector<Move>& availMoves) 
+{
     short tempBoard[BOARDSIZE][BOARDSIZE]; //score board
     short board[BOARDSIZE][BOARDSIZE]; // stone board
 
@@ -385,7 +408,9 @@ void Mcts::findMoves(pNode currNode, vector<Move>& oneGridAway, vector<Move>& av
     this->findMovesOneGrid(board, availMoves, 5);
 }
 
-void Mcts::printAvailMoves(vector<Move> availMov) {
+void 
+Mcts::printAvailMoves(vector<Move> availMov) 
+{
     int i = 0;
     for (Move temp : availMov) {
         printf("x:%2d y:%2d\t", temp.x, temp.y);
@@ -394,7 +419,9 @@ void Mcts::printAvailMoves(vector<Move> availMov) {
     }
 }
 
-int Mcts::chkVic(short** board, Move mov1, Move mov2) {
+int 
+Mcts::chkVic(short** board, Move mov1, Move mov2) 
+{
     int count = 0;
     short color = board[mov1.y][mov1.x];
 
@@ -569,7 +596,9 @@ int Mcts::chkVic(short** board, Move mov1, Move mov2) {
     return 0;
 }// end of chkVic()
 
-pNode Mcts::returnMov() {
+pNode
+Mcts::returnMov() 
+{
     float max = -1000, value = 0;
     pNode toReturn = NULL, rootNode = this->root;
     vector<pNode>& iter = *(rootNode->children);

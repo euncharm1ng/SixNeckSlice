@@ -3,7 +3,7 @@
 using namespace std;
 using namespace sf;
 
-int cell_size = 70;
+int cell_size = 30;
 int board[19][19] = {};
 #define BLACK (1)
 #define WHITE (2)
@@ -102,7 +102,7 @@ int main(void)
 	}
 	return 0;
 }
-  /*
+/*
 #include<cstdio>
 #include "mcts.h"
 #include <iostream>
@@ -234,3 +234,4 @@ void freeAll(pNode currnode) {
     return;
 
 }
+*/
