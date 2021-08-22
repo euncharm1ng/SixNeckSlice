@@ -24,12 +24,11 @@ todo:
 #define DEBUG 0 //to 1 to run in debug mode
 #define DEBUGVIC 0 //chkVic()
 #define DEBUGROLL 0 //rollout()
-#define BLACK 1
-#define WHITE 2
-#define BOARDSIZE 19
+
+
 #define MOVRANGE 2
 #define TIMELIMIT 20
-#define INFI 3e10
+
 
 
 // #define ROLLWINVAL 1
