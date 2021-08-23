@@ -98,3 +98,5 @@ int aiPlays () ;
 void runGUI();
 
 void setRedStone();
+
+int runDahunGUI();

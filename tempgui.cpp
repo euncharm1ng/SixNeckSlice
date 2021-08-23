@@ -142,6 +142,8 @@ runGUI()
 {
     initGUI();
     
+    runDahunGUI();
+
     if(userColor == BLACK){ 
         userPlayFirst();
         aiPlays();
