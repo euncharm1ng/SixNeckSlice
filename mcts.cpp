@@ -5,6 +5,7 @@ refereced:
 */
 /*
 todo:
+    ucb, total value, n
 
 */
 
@@ -26,6 +27,7 @@ todo:
 #define DEBUGROLL 0 //rollout()
 #define MOVRANGE 2
 #define TIMELIMIT 20
+
 #define ROLLWINVAL 1
 #define ROLLLOSEVAL -10
 #define UCBMULT 15
@@ -38,6 +40,7 @@ using namespace std;
 static int nodeCnt = 0;
 static float rollTime = 0;
 static float selTime = 0;
+ofstream file;
 
 pNode 
 createNode(short paraColor) 
@@ -106,6 +109,37 @@ freeNode(pNode paraNode)
     free(paraNode);
 }
 
+void 
+appendUCB(pNode root, short** board){
+    file.open("test.txt", std::ofstream::out | std::ofstream::app);
+    if(file.is_open()){
+        puts("-------------------------------------------");
+        file << "with the board being : \n";
+        for(int i = 0; i < BOARDSIZE; i++){
+            for(int j =0; j < BOARDSIZE; j++){
+                if (board[i][j] == BLACK) file << "o ";
+                else if (board[i][j] == WHITE) file <<"x ";
+                else if (board[i][j] == OBSTACLE) file <<"* ";
+                else file << "+ ";
+            }
+            file <<"\n";
+        }
+
+        float parentN = log((float)root->n);
+        
+        vector<pNode> &iter = *(root->children);
+        for (pNode child : iter) {
+            float chk = child->mean + UCBMULT * (sqrt(parentN / (float)child->n));
+            file << " move 1: " << child->movesLog[0].x << ", " << child->movesLog[0].y 
+                << " move 2: " << child->movesLog[1].x << ", "<< child->movesLog[1].y 
+                << "\tucb: " << chk << " n: " << child->n << " t: "<< child->t 
+                << " mean: " << child->mean << "\n";
+        }
+    }
+    file.close();
+    puts("hsdklfjsdfksdlasldf");
+}
+
 
 /*---------- class mcts ----------*/
 
@@ -169,6 +203,7 @@ Mcts::runGame()
     nodeCnt= 0;
     selTime = 0;
     rollTime = 0;
+    appendUCB(this->root, this->board);
     return result;
 }// end of runGame()
 

@@ -70,16 +70,16 @@ class Mcts {
 
 /*---------- tempgui.cpp ----------*/
 
-void initGUI ();
+void initGUI();
 
-void aiPlayFirst ();
+void aiPlayFirst();
 
 /* 
 * return 1 for valid input, 0 for invalid input and prints an error message 
 */
-int chkBoundary (Move inputMove);
+int chkBoundary(Move inputMove);
 
-void userPlayFirst ();
+void userPlayFirst();
 
 /*
 * return 1 on success, return -1 for placing stone in occupied location
@@ -93,10 +93,10 @@ int receiveUserInput ();
 void printBoard();
 
 /* ai makes its move; run and return result from chkVin() from mcts.c */
-int aiPlays () ;
+int aiPlays() ;
 
 void runGUI();
 
 void setRedStone();
 
-int runDahunGUI();
+void* runDahunGUI(void*);
