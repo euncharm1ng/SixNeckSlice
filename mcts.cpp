@@ -30,9 +30,9 @@ todo:
 #define MOVRANGE 2
 #define TIMELIMIT 20
 #define INFI 3e10
-#define ROLLWINVAL 10
-#define ROLLLOSEVAL -20
-#define UCBMULT 5.0
+#define ROLLWINVAL 1
+#define ROLLLOSEVAL -10
+#define UCBMULT 15.0
 
 
 #define RED "\033[31m"
@@ -203,6 +203,76 @@ pNode Mcts::select(pNode parentNode) {
     return returnNode;
 }// end of select()
 
+bool Mcts::chkPossible(short** board, Move mov1, Move mov2) {
+
+    board[mov1.y][mov1.x] = this->aiColor;
+    board[mov2.y][mov2.x] = this->aiColor;
+
+    short x, y, count = 0;
+    short ai = this->aiColor;
+    short user = (ai == BLACK) ? WHITE : BLACK;
+    short secondNextColor = 0, thirdNextColor = 0;
+    x = mov2.y; y = mov2.x;
+
+    //check vertical
+    if (y < 16) {
+        secondNextColor = board[x][y + 2];
+        thirdNextColor = board[x][y + 3];
+        if (secondNextColor == ai && thirdNextColor == ai) return true;
+        if (secondNextColor == user && thirdNextColor == user) return true;
+    }
+    if (y > 2) {
+        secondNextColor = board[x][y - 2];
+        thirdNextColor = board[x][y - 3];
+        if (secondNextColor == ai && thirdNextColor == ai) return true;
+        if (secondNextColor == user && thirdNextColor == user) return true;
+    }
+
+    //check horizion
+    if (x < 16) {
+        secondNextColor = board[x+2][y];
+        thirdNextColor = board[x+3][y];
+        if (secondNextColor == ai && thirdNextColor == ai) return true;
+        if (secondNextColor == user && thirdNextColor == user) return true;
+    }
+    if (x > 2) {
+        secondNextColor = board[x-2][y];
+        thirdNextColor = board[x-3][y];
+        if (secondNextColor == ai && thirdNextColor == ai) return true;
+        if (secondNextColor == user && thirdNextColor == user) return true;
+    }
+
+    //check right-up diagonal
+    if (x < 16 && y > 2) {
+        secondNextColor = board[x+2][y - 2];
+        thirdNextColor = board[x+3][y - 3];
+        if (secondNextColor == ai && thirdNextColor == ai) return true;
+        if (secondNextColor == user && thirdNextColor == user) return true;
+    }
+    if (x > 2 && y < 16) {
+        secondNextColor = board[x-2][y + 2];
+        thirdNextColor = board[x-3][y + 3];
+        if (secondNextColor == ai && thirdNextColor == ai) return true;
+        if (secondNextColor == user && thirdNextColor == user) return true;
+    }
+
+    //check left-up diagonal
+    if (x > 2 && y > 2) {
+        secondNextColor = board[x-2][y - 2];
+        thirdNextColor = board[x-3][y - 3];
+        if (secondNextColor == ai && thirdNextColor == ai) return true;
+        if (secondNextColor == user && thirdNextColor == user) return true;
+    }
+    if (x < 16 && y < 16) {
+        secondNextColor = board[x+2][y + 2];
+        thirdNextColor = board[x+3][y + 3];
+        if (secondNextColor == ai && thirdNextColor == ai) return true;
+        if (secondNextColor == user && thirdNextColor == user) return true;
+    }
+
+    return false;
+}
+
 void Mcts::expansion(pNode currNode) {
     short child_color = (currNode->color == BLACK) ? WHITE : BLACK;
     int gridMoveSize = 0, availMoveSize = 0;
@@ -222,14 +292,20 @@ void Mcts::expansion(pNode currNode) {
         for (int j = i + 1; j < gridMoveSize; j++) {
             mov2 = oneGridAway[j];
             tempNode = createNode(child_color, currNode, mov1, mov2);
+            //printf("mov1.x = %d, mov1.y = %d / mov2.x = %d, mov2.y = %d\n", mov1.x, mov1.y, mov2.x, mov2.y);
             addC(currNode, tempNode);
         }
         for (int j = 0; j < availMoveSize; j++) {
             mov2 = availMoves[j];
-            tempNode = createNode(child_color, currNode, mov1, mov2);
-            addC(currNode, tempNode);
+            if (chkPossible(this->board, mov1, mov2)) {
+                tempNode = createNode(child_color, currNode, mov1, mov2);
+                //printf("possible moves : mov1.x = %d, mov1.y = %d / mov2.x = %d, mov2.y = %d\n", mov1.x, mov1.y, mov2.x, mov2.y);
+                addC(currNode, tempNode);
+            }
+            board[mov1.y][mov1.x] = board[mov2.y][mov2.x] = 0;
         }
     }
+    //printf("In expansion, Children Size : %d\n", currNode->children->size());
 #if DEBUG
     printf("currnode -> children.size: %d, avail move size: %d\n", currNode->children->size(), gridMoveSize);
 #endif
@@ -320,24 +396,30 @@ float Mcts::rollout(pNode currNode) {
 
             if (vicChk == this->aiColor) {
                 for (int i = 0; i < BOARDSIZE; i++) {
-                    free(boardToRoll[i]);
+                    //free(boardToRoll[i]);
+                    delete boardToRoll[i];
                 }
-                free(boardToRoll);
+                //free(boardToRoll);
+                delete boardToRoll;
                 return ROLLWINVAL;
             }
             else {
                 for (int i = 0; i < BOARDSIZE; i++) {
-                    free(boardToRoll[i]);
+                    //free(boardToRoll[i]);
+                    delete boardToRoll[i];
                 }
-                free(boardToRoll);
+                //free(boardToRoll);
+                delete boardToRoll;
                 return ROLLLOSEVAL;
             }
         }
     } while (availMoves.size() > 0);
     for (int i = 0; i < BOARDSIZE; i++) {
-        free(boardToRoll[i]);
+        //free(boardToRoll[i]);
+        delete boardToRoll[i];
     }
-    free(boardToRoll);
+    //free(boardToRoll);
+    delete boardToRoll;
     return 0;
 }// end of rollout()
 
@@ -373,6 +455,7 @@ void Mcts::findMovesOneGrid(short board[][BOARDSIZE], vector<Move>& moveVec, int
                         board[k][l] = tagToAvoid;
                         oneGridMove.x = (short)l;
                         oneGridMove.y = (short)k;
+
                         moveVec.push_back(oneGridMove);
                     }
                 }

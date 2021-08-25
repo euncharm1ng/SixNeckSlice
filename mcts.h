@@ -49,4 +49,5 @@ public:
     pNode returnMov();
     void printAvailMoves(vector<Move> availMov);
     void findMovesOneGrid(short board[][BOARDSIZE], vector<Move>& moveVec, int tagToAvoid);
+    bool chkPossible(short** board, Move mov1, Move mov2);
 };
