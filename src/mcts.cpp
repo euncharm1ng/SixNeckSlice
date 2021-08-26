@@ -29,8 +29,8 @@ todo:
 #define TIMELIMIT 20
 
 #define ROLLWINVAL 1
-#define ROLLLOSEVAL -10
-#define UCBMULT 15
+#define ROLLLOSEVAL 0
+#define UCBMULT 2
 // #define ROLLWINVAL 10
 // #define ROLLLOSEVAL -20
 // #define UCBMULT 5.0
@@ -110,12 +110,14 @@ freeNode(pNode paraNode)
 }
 
 void 
-appendUCB(pNode root, short** board){
+appendUCB(pNode root, short** board, pNode result){
     file.open("test.txt", std::ofstream::out | std::ofstream::app);
     if(file.is_open()){
-        puts("-------------------------------------------");
         file << "with the board being : \n";
+        file << "y\\x 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8\n";
         for(int i = 0; i < BOARDSIZE; i++){
+            int printout = i% 10;
+            file << "  " << printout << " ";
             for(int j =0; j < BOARDSIZE; j++){
                 if (board[i][j] == BLACK) file << "o ";
                 else if (board[i][j] == WHITE) file <<"x ";
@@ -124,20 +126,28 @@ appendUCB(pNode root, short** board){
             }
             file <<"\n";
         }
-
         float parentN = log((float)root->n);
+
+        float chkre = result->mean + UCBMULT * (sqrt(parentN / (float)result->n));
+        file << "roll win: " << ROLLWINVAL << "roll lose: " << ROLLLOSEVAL << "ucb mult: " << UCBMULT 
+                <<  "selected: \n" << "move 1: " << result->movesLog[0].x << ", " << result->movesLog[0].y 
+                << "\tmove 2: " << result->movesLog[1].x << ", "<< result->movesLog[1].y 
+                << "\tucb: " << chkre << "\tn: " << result->n << "\tt: "<< result->t 
+                << "\tmean: " << result->mean << "\n";
+
+        
         
         vector<pNode> &iter = *(root->children);
         for (pNode child : iter) {
             float chk = child->mean + UCBMULT * (sqrt(parentN / (float)child->n));
-            file << " move 1: " << child->movesLog[0].x << ", " << child->movesLog[0].y 
-                << " move 2: " << child->movesLog[1].x << ", "<< child->movesLog[1].y 
-                << "\tucb: " << chk << " n: " << child->n << " t: "<< child->t 
-                << " mean: " << child->mean << "\n";
+            file << "move 1: " << child->movesLog[0].x << ", " << child->movesLog[0].y 
+                << "\tmove 2: " << child->movesLog[1].x << ", "<< child->movesLog[1].y 
+                << "\tucb: " << chk << "\tn: " << child->n << "\tt: "<< child->t 
+                << "\tmean: " << child->mean << "\n";
         }
+
     }
     file.close();
-    puts("hsdklfjsdfksdlasldf");
 }
 
 
@@ -203,7 +213,7 @@ Mcts::runGame()
     nodeCnt= 0;
     selTime = 0;
     rollTime = 0;
-    appendUCB(this->root, this->board);
+    appendUCB(this->root, this->board, result);
     return result;
 }// end of runGame()
 
@@ -482,11 +492,11 @@ Mcts::chkVic(short** board, Move mov1, Move mov2)
 pNode
 Mcts::returnMov() 
 {
-    float max = -1000, value = 0;
+    float max = -1000000, value = 0;
     pNode toReturn = NULL, rootNode = this->root;
     vector<pNode>& iter = *(rootNode->children);
     for (pNode child : iter) {
-        value = child->t;
+        value = child->mean;
         if (max < value) {
             max = value;
             toReturn = child;
