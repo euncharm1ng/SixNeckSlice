@@ -241,6 +241,76 @@ Mcts::select(pNode parentNode)
     return returnNode;
 }// end of select()
 
+bool Mcts::chkPossible(short** board, Move mov1, Move mov2) {
+
+    board[mov1.y][mov1.x] = this->aiColor;
+    board[mov2.y][mov2.x] = this->aiColor;
+
+    short x, y, count = 0;
+    short ai = this->aiColor;
+    short user = (ai == BLACK) ? WHITE : BLACK;
+    short secondNextColor = 0, thirdNextColor = 0;
+    x = mov2.y; y = mov2.x;
+
+    //check vertical
+    if (y < 16) {
+        secondNextColor = board[x][y + 2];
+        thirdNextColor = board[x][y + 3];
+        if (secondNextColor == ai && thirdNextColor == ai) return true;
+        if (secondNextColor == user && thirdNextColor == user) return true;
+    }
+    if (y > 2) {
+        secondNextColor = board[x][y - 2];
+        thirdNextColor = board[x][y - 3];
+        if (secondNextColor == ai && thirdNextColor == ai) return true;
+        if (secondNextColor == user && thirdNextColor == user) return true;
+    }
+
+    //check horizion
+    if (x < 16) {
+        secondNextColor = board[x+2][y];
+        thirdNextColor = board[x+3][y];
+        if (secondNextColor == ai && thirdNextColor == ai) return true;
+        if (secondNextColor == user && thirdNextColor == user) return true;
+    }
+    if (x > 2) {
+        secondNextColor = board[x-2][y];
+        thirdNextColor = board[x-3][y];
+        if (secondNextColor == ai && thirdNextColor == ai) return true;
+        if (secondNextColor == user && thirdNextColor == user) return true;
+    }
+
+    //check right-up diagonal
+    if (x < 16 && y > 2) {
+        secondNextColor = board[x+2][y - 2];
+        thirdNextColor = board[x+3][y - 3];
+        if (secondNextColor == ai && thirdNextColor == ai) return true;
+        if (secondNextColor == user && thirdNextColor == user) return true;
+    }
+    if (x > 2 && y < 16) {
+        secondNextColor = board[x-2][y + 2];
+        thirdNextColor = board[x-3][y + 3];
+        if (secondNextColor == ai && thirdNextColor == ai) return true;
+        if (secondNextColor == user && thirdNextColor == user) return true;
+    }
+
+    //check left-up diagonal
+    if (x > 2 && y > 2) {
+        secondNextColor = board[x-2][y - 2];
+        thirdNextColor = board[x-3][y - 3];
+        if (secondNextColor == ai && thirdNextColor == ai) return true;
+        if (secondNextColor == user && thirdNextColor == user) return true;
+    }
+    if (x < 16 && y < 16) {
+        secondNextColor = board[x+2][y + 2];
+        thirdNextColor = board[x+3][y + 3];
+        if (secondNextColor == ai && thirdNextColor == ai) return true;
+        if (secondNextColor == user && thirdNextColor == user) return true;
+    }
+
+    return false;
+}
+
 void 
 Mcts::expansion(pNode currNode) 
 {
@@ -263,13 +333,15 @@ Mcts::expansion(pNode currNode)
             mov2 = oneGridAway[j];
             tempNode = createNode(child_color, currNode, mov1, mov2);
             currNode->children->push_back(tempNode);
-            // addC(currNode, tempNode);
         }
         for (int j = 0; j < availMoveSize; j++) {
             mov2 = availMoves[j];
-            tempNode = createNode(child_color, currNode, mov1, mov2);
-            currNode->children->push_back(tempNode);
-            // addC(currNode, tempNode);
+            if (chkPossible(this->board, mov1, mov2)) {
+                tempNode = createNode(child_color, currNode, mov1, mov2);
+                //printf("possible moves : mov1.x = %d, mov1.y = %d / mov2.x = %d, mov2.y = %d\n", mov1.x, mov1.y, mov2.x, mov2.y);
+                currNode->children->push_back(tempNode);
+            }
+            board[mov1.y][mov1.x] = board[mov2.y][mov2.x] = 0;
         }
     }
 #if DEBUG
