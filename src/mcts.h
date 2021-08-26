@@ -65,7 +65,7 @@ class Mcts {
         int chkVic(short** board,Move mov1, Move mov2);
         pNode returnMov();
         void findMovesOneGrid(short board[][BOARDSIZE], vector<Move>& moveVec, int tagToAvoid);
-        bool chkPossible(short** board, Move mov1, Move mov2);
+        bool chkPossible(short** board, Move mov1);
 };
 
 

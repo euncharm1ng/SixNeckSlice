@@ -29,7 +29,7 @@ todo:
 #define TIMELIMIT 20
 
 #define ROLLWINVAL 1
-#define ROLLLOSEVAL 0
+#define ROLLLOSEVAL -1
 #define UCBMULT 2
 // #define ROLLWINVAL 10
 // #define ROLLLOSEVAL -20
@@ -129,11 +129,12 @@ appendUCB(pNode root, short** board, pNode result){
         float parentN = log((float)root->n);
 
         float chkre = result->mean + UCBMULT * (sqrt(parentN / (float)result->n));
-        file << "roll win: " << ROLLWINVAL << "roll lose: " << ROLLLOSEVAL << "ucb mult: " << UCBMULT 
-                <<  "selected: \n" << "move 1: " << result->movesLog[0].x << ", " << result->movesLog[0].y 
+        file << "roll win: " << ROLLWINVAL << " roll lose: " << ROLLLOSEVAL << " ucb mult: " 
+                << UCBMULT <<" "<< root->children->size() << " " << root->n
+                << " selected: \n" << "move 1: " << result->movesLog[0].x << ", " << result->movesLog[0].y 
                 << "\tmove 2: " << result->movesLog[1].x << ", "<< result->movesLog[1].y 
                 << "\tucb: " << chkre << "\tn: " << result->n << "\tt: "<< result->t 
-                << "\tmean: " << result->mean << "\n";
+                << "\tmean: " << result->mean << "\n\n";
 
         
         
@@ -180,15 +181,17 @@ Mcts::runGame()
     printf("end of 1st expansion with size: %lum nodecnt: %d\n", treeRoot->children->size(), nodeCnt);
     
     vector<pNode> &iter = *(treeRoot->children);
-    pNode child = NULL;
+    // pNode child = NULL;
     for (pNode child : iter) {
-        value = this->rollout(child);
-        this->backprop(child, value);
-        this->expansion(child);
-        random_shuffle(child->children->begin(), child->children->end());
+        for(int rollcnt = 0; rollcnt < 100; rollcnt++){
+            value = this->rollout(child);
+            this->backprop(child, value);
+        }
+        // this->expansion(child);
+        // random_shuffle(child->children->begin(), child->children->end());
     }
-    printf("end of 2nd expansion nodeCnt: %d\n", nodeCnt);
-    random_shuffle(treeRoot->children->begin(), treeRoot->children->end());
+    // printf("end of 2nd expansion nodeCnt: %d\n", nodeCnt);
+    // random_shuffle(treeRoot->children->begin(), treeRoot->children->end());
     
     do {
         tempNode = treeRoot;
@@ -241,91 +244,65 @@ Mcts::select(pNode parentNode)
     return returnNode;
 }// end of select()
 
-bool Mcts::chkPossible(short** board, Move mov1, Move mov2) {
-
-    board[mov1.y][mov1.x] = this->aiColor;
-    board[mov2.y][mov2.x] = this->aiColor;
-
-    short x, y, count = 0;
-    short ai = this->aiColor;
-    short user = (ai == BLACK) ? WHITE : BLACK;
-    short secondNextColor = 0, thirdNextColor = 0;
-    x = mov2.y; y = mov2.x;
+bool Mcts::chkPossible(short** board, Move mov1) {
+    short i = mov1.y, j = mov1.x;
 
     //check vertical
-    if (y < 16) {
-        secondNextColor = board[x][y + 2];
-        thirdNextColor = board[x][y + 3];
-        if (secondNextColor == ai && thirdNextColor == ai) return true;
-        if (secondNextColor == user && thirdNextColor == user) return true;
-    }
-    if (y > 2) {
-        secondNextColor = board[x][y - 2];
-        thirdNextColor = board[x][y - 3];
-        if (secondNextColor == ai && thirdNextColor == ai) return true;
-        if (secondNextColor == user && thirdNextColor == user) return true;
-    }
+    if (j < 16 && board[i][j+2] != 0 && board[i][j+2] == board[i][j+3]) return true;
+    else if (j > 2 && board[i][j-2] != 0 && board[i][j-2] == board[i][j-3]) return true;
 
     //check horizion
-    if (x < 16) {
-        secondNextColor = board[x+2][y];
-        thirdNextColor = board[x+3][y];
-        if (secondNextColor == ai && thirdNextColor == ai) return true;
-        if (secondNextColor == user && thirdNextColor == user) return true;
-    }
-    if (x > 2) {
-        secondNextColor = board[x-2][y];
-        thirdNextColor = board[x-3][y];
-        if (secondNextColor == ai && thirdNextColor == ai) return true;
-        if (secondNextColor == user && thirdNextColor == user) return true;
-    }
+    else if (i < 16 && board[i+2][j] != 0 && board[i+2][j] == board[i+3][j]) return true;
+    else if (i > 2 && board[i-2][j] != 0 && board[i-2][j] == board[i-3][j]) return true;
 
     //check right-up diagonal
-    if (x < 16 && y > 2) {
-        secondNextColor = board[x+2][y - 2];
-        thirdNextColor = board[x+3][y - 3];
-        if (secondNextColor == ai && thirdNextColor == ai) return true;
-        if (secondNextColor == user && thirdNextColor == user) return true;
-    }
-    if (x > 2 && y < 16) {
-        secondNextColor = board[x-2][y + 2];
-        thirdNextColor = board[x-3][y + 3];
-        if (secondNextColor == ai && thirdNextColor == ai) return true;
-        if (secondNextColor == user && thirdNextColor == user) return true;
-    }
+    else if (i < 16 && j > 2 && board[i+2][j-2] != 0 && board[i+2][j-2] == board[i+3][j-3]) return true;
+    else if (i > 2 && j < 16 && board[i-2][j+2] !=0 && board[i-2][j+2] == board[i-3][j+3]) return true;
 
     //check left-up diagonal
-    if (x > 2 && y > 2) {
-        secondNextColor = board[x-2][y - 2];
-        thirdNextColor = board[x-3][y - 3];
-        if (secondNextColor == ai && thirdNextColor == ai) return true;
-        if (secondNextColor == user && thirdNextColor == user) return true;
-    }
-    if (x < 16 && y < 16) {
-        secondNextColor = board[x+2][y + 2];
-        thirdNextColor = board[x+3][y + 3];
-        if (secondNextColor == ai && thirdNextColor == ai) return true;
-        if (secondNextColor == user && thirdNextColor == user) return true;
-    }
-
-    return false;
+    else if (i > 2 && j > 2 && board[i-2][j-2] != 0 && board[i-2][j-2] == board[i-3][j-3]) return true;
+    else if (i < 16 && j < 16 & board[i+2][j+2] != 0 && board[i+2][j+2] == board[i+3][j+3]) return true;
+    else return false;
 }
 
 void 
 Mcts::expansion(pNode currNode) 
 {
     short child_color = (currNode->color == BLACK) ? WHITE : BLACK;
-    int gridMoveSize = 0, availMoveSize = 0;
+    int gridMoveSize = 0, availMoveSize = 0, twoGridAwaySize = 0;
     Move mov1, mov2;
-    vector<Move> oneGridAway, availMoves;
+    vector<Move> oneGridAway, availMoves, twoGridAway;
+    short** placeFirstMov = (short**)malloc(sizeof(short*) * BOARDSIZE);
+    for(int i =0; i< BOARDSIZE; i++){
+        placeFirstMov[i] = (short*)malloc(sizeof(short) * BOARDSIZE);
+        for(int j =0; j< BOARDSIZE; j++){
+            placeFirstMov[i][j] = this->board[i][j];
+        }
+    }
 
     this->findMoves(currNode, oneGridAway, availMoves);
-
+    
     gridMoveSize = oneGridAway.size();
     availMoveSize = availMoves.size();
-#if DEBUG
-    printf("DEBUG MODE expansion(): movesize: %d\n", moveSize);
-#endif
+
+    for(int i =0; i< availMoveSize; i++){
+        if(chkPossible(this->board, availMoves[i]))
+            twoGridAway.push_back(availMoves[i]);
+    }
+    twoGridAwaySize = twoGridAway.size(); 
+
+    for(int i =0; i< twoGridAwaySize; i++){
+        placeFirstMov[twoGridAway[i].y][twoGridAway[i].x] = 7;
+    }
+    puts("y\\x -1 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8");
+    for (int i = 0; i < 19; i++) {
+        printf("  %d ", i%10);
+        for (int j = 0; j < 19; j++) {
+            printf(" %d", placeFirstMov[i][j]);
+        }
+        printf("\n");
+    }
+
     pNode tempNode = NULL;
     for (int i = 0; i < gridMoveSize; i++) {
         mov1 = oneGridAway[i];
@@ -334,38 +311,33 @@ Mcts::expansion(pNode currNode)
             tempNode = createNode(child_color, currNode, mov1, mov2);
             currNode->children->push_back(tempNode);
         }
-        for (int j = 0; j < availMoveSize; j++) {
-            mov2 = availMoves[j];
-            if (chkPossible(this->board, mov1, mov2)) {
-                tempNode = createNode(child_color, currNode, mov1, mov2);
-                //printf("possible moves : mov1.x = %d, mov1.y = %d / mov2.x = %d, mov2.y = %d\n", mov1.x, mov1.y, mov2.x, mov2.y);
-                currNode->children->push_back(tempNode);
-            }
-            board[mov1.y][mov1.x] = board[mov2.y][mov2.x] = 0;
+        for (int j = 0; j < twoGridAwaySize; j++) {
+            mov2 = twoGridAway[j];
+            tempNode = createNode(child_color, currNode, mov1, mov2);
+            currNode->children->push_back(tempNode);
         }
     }
-#if DEBUG
-    printf("currnode -> children.size: %d, avail move size: %d\n", currNode->children->size(), gridMoveSize);
-#endif
     currNode->children->shrink_to_fit();
+    
+    for(int i =0; i< BOARDSIZE; i++){
+        free(placeFirstMov[i]);
+    }
+    free(placeFirstMov);
+
 }// end of expansion()
 
 float 
 Mcts::rollout(pNode currNode) 
 {
     time_t start = clock();
-#if DEBUGROLL
-    time_t startTime = clock();
-#endif
     int size = 0, turn = this->aiColor, vicChk = 0;
     vector<Move> availMoves;
+    srand(time(NULL));
     short** boardToRoll = (short**)malloc(sizeof(short*) * BOARDSIZE);
     for (int i = 0; i < BOARDSIZE; i++) {
         boardToRoll[i] = (short*)malloc(sizeof(short) * BOARDSIZE);
         for (int j = 0; j < BOARDSIZE; j++) boardToRoll[i][j] = 0;
     }
-
-    srand(time(NULL));
 
     // board to roll: 
     for (int i = 0; i < 19; i++) {

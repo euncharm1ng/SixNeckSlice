@@ -1,6 +1,6 @@
 #include "mcts.h"
 #include <SFML/Graphics.hpp>
-#include<cstdio>
+#include <cstdio>
 #include <iostream>
 #include <pthread.h>
 
