@@ -113,9 +113,11 @@ void
 appendUCB(pNode root, short** board){
     file.open("test.txt", std::ofstream::out | std::ofstream::app);
     if(file.is_open()){
-        puts("-------------------------------------------");
         file << "with the board being : \n";
+        file << "y\\x 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8\n";
         for(int i = 0; i < BOARDSIZE; i++){
+            int printout = i% 10;
+            file << " " << printout << " ";
             for(int j =0; j < BOARDSIZE; j++){
                 if (board[i][j] == BLACK) file << "o ";
                 else if (board[i][j] == WHITE) file <<"x ";
@@ -130,16 +132,14 @@ appendUCB(pNode root, short** board){
         vector<pNode> &iter = *(root->children);
         for (pNode child : iter) {
             float chk = child->mean + UCBMULT * (sqrt(parentN / (float)child->n));
-            file << " move 1: " << child->movesLog[0].x << ", " << child->movesLog[0].y 
-                << " move 2: " << child->movesLog[1].x << ", "<< child->movesLog[1].y 
-                << "\tucb: " << chk << " n: " << child->n << " t: "<< child->t 
-                << " mean: " << child->mean << "\n";
+            file << "move 1: " << child->movesLog[0].x << ", " << child->movesLog[0].y 
+                << "\tmove 2: " << child->movesLog[1].x << ", "<< child->movesLog[1].y 
+                << "\tucb: " << chk << "\tn: " << child->n << "\tt: "<< child->t 
+                << "\tmean: " << child->mean << "\n";
         }
     }
     file.close();
-    puts("hsdklfjsdfksdlasldf");
 }
-
 
 /*---------- class mcts ----------*/
 
@@ -204,6 +204,8 @@ Mcts::runGame()
     selTime = 0;
     rollTime = 0;
     appendUCB(this->root, this->board);
+    puts("test");
+    printf("123%d456", result->movesLog[0].x);
     return result;
 }// end of runGame()
 
@@ -294,7 +296,8 @@ Mcts::rollout(pNode currNode)
     for (int i = 0; i < k; i += 2) { //TODO: gotta handle the case with black place 1 stone only, gotta check the moveslog too
         boardToRoll[currNode->movesLog[i].y][currNode->movesLog[i].x] = turn;
         boardToRoll[currNode->movesLog[i + 1].y][currNode->movesLog[i + 1].x] = turn;
-        if(vicChk = chkVic(boardToRoll, currNode->movesLog[i], currNode->movesLog[i+1])){
+        vicChk = chkVic(boardToRoll, currNode->movesLog[i], currNode->movesLog[i+1]);
+        if(vicChk){
             for(int i =0; i < BOARDSIZE; i++){
                 free(boardToRoll[i]);
             }
@@ -482,9 +485,11 @@ Mcts::chkVic(short** board, Move mov1, Move mov2)
 pNode
 Mcts::returnMov() 
 {
-    float max = -1000, value = 0;
-    pNode toReturn = NULL, rootNode = this->root;
-    vector<pNode>& iter = *(rootNode->children);
+    float max = -1000000, value = 0;
+    pNode toReturn = NULL; 
+    pNode rootNode = this->root;
+    vector<pNode> &iter = *(rootNode->children);
+    pNode child = NULL;
     for (pNode child : iter) {
         value = child->t;
         if (max < value) {
@@ -492,5 +497,6 @@ Mcts::returnMov()
             toReturn = child;
         }
     }
+    //toReturn = this -> root -> children -> at(0);
     return toReturn;
 }

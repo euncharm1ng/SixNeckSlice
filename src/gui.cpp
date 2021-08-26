@@ -1,12 +1,12 @@
 #include "mcts.h"
-#include <SFML/Graphics.hpp>
+//#include <SFML/Graphics.hpp>
 #include<cstdio>
 #include <iostream>
 #include <pthread.h>
 
 
 using namespace std;
-using namespace sf;
+//using namespace sf;
 
 int cell_size = 30;
 // int board[19][19] = {};
@@ -17,7 +17,7 @@ short** guiBoard;
 short aiColor, userColor;
 Mcts m;
 pthread_t freer, GUIRunner;
-pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mlock = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t wakegui = PTHREAD_COND_INITIALIZER;
 pthread_cond_t wakeai = PTHREAD_COND_INITIALIZER;
 
@@ -106,16 +106,16 @@ int
 aiPlays() 
 {
     pNode result = m.runGame();
+	guiBoard[0][0] = 0;
+	
+	printf("123%d456", result->movesLog[0].x);
     placeStone(result->movesLog[0], aiColor);
     placeStone(result->movesLog[1], aiColor);
-
     int chkWin = m.chkVic(guiBoard, result->movesLog[0], result->movesLog[1]);
 
     pthread_create(&freer, NULL, freeAll, m.root);
 	pthread_detach(freer);
-
     m.setRoot(aiColor);
-	
     return chkWin;    
 }
 
@@ -151,23 +151,23 @@ receiveUserInput ()
 void 
 GUIuserPlayFirst()
 {
-	pthread_mutex_lock(&lock);
+	pthread_mutex_lock(&mlock);
 	pthread_cond_signal(&wakegui);
-	pthread_cond_wait(&wakeai, &lock);
-	pthread_mutex_unlock(&lock);
+	pthread_cond_wait(&wakeai, &mlock);
+	pthread_mutex_unlock(&mlock);
 }
 
 int
 GUIreceiveUserInput()
 {
-	pthread_mutex_lock(&lock);
+	pthread_mutex_lock(&mlock);
 	pthread_cond_signal(&wakegui);
-	pthread_cond_wait(&wakeai, &lock);
+	pthread_cond_wait(&wakeai, &mlock);
 
 	pthread_cond_signal(&wakegui);
-	pthread_cond_wait(&wakeai, &lock);
+	pthread_cond_wait(&wakeai, &mlock);
 	
-	pthread_mutex_unlock(&lock);
+	pthread_mutex_unlock(&mlock);
 
 	if (m.chkVic(guiBoard, mov1, mov2))
         return 1;
@@ -179,12 +179,12 @@ GUIreceiveUserInput()
 void 
 runGUI()
 {
-	pthread_create(&GUIRunner, NULL, runDahunGUI, NULL);
+	//pthread_create(&GUIRunner, NULL, runDahunGUI, NULL);
     initGUI();
 	
     if(userColor == BLACK){
-		GUIuserPlayFirst();
-        // userPlayFirst();
+		//GUIuserPlayFirst();
+        userPlayFirst();
         aiPlays();
     }
     else{ 
@@ -193,8 +193,8 @@ runGUI()
     }
 
     do{
-        // if(receiveUserInput()){
-		if(GUIreceiveUserInput()){
+        if(receiveUserInput()){
+		//if(GUIreceiveUserInput()){
             puts("user wins");
             break;
         }
@@ -202,22 +202,24 @@ runGUI()
     printBoard();
     puts("end of game");
 }
-
+/*
 void*
 runDahunGUI(void*)
 {
 	int toggleMov = 0;
-	/* ----- void init() ----- */
+	
 	ContextSettings s;
 	s.antialiasingLevel = 8;
 	RenderWindow window(VideoMode(cell_size * 19, cell_size * 19), "SNS", Style::Default, s);
-	CircleShape blackStone(1.0 * cell_size / 2), whiteStone(1.0 * cell_size / 2); // bs : Black Stone , ws : White Stone
+	CircleShape blackStone(1.0 * cell_size / 2), whiteStone(1.0 * cell_size / 2), redStone(1.0 * cell_size / 2);
 
 	blackStone.setFillColor(Color::Black);
 	blackStone.setOutlineColor(Color::Black);
 	whiteStone.setFillColor(Color::White);
 	whiteStone.setOutlineColor(Color::Black);
 	whiteStone.setOutlineThickness(-2);
+	redStone.setFillColor(Color::Red);
+	redStone.setOutlineColor(Color::Red);
 
 	auto draw_board = [&]() {
 		window.clear(Color(255, 207, 97));
@@ -242,7 +244,7 @@ runDahunGUI(void*)
 			vline[1].color = Color::Black;
 			window.draw(vline, 2, Lines);
 		}
-		/* ----- draw 9 place holding dots ----- */
+		
 		float start_point_r = half_cell / 5;
 		CircleShape circle(start_point_r);
 		circle.setFillColor(Color::Black);
@@ -271,6 +273,11 @@ runDahunGUI(void*)
 					whiteStone.setPosition(x * cell_size, y * cell_size);
 					window.draw(whiteStone);
 				}
+				else if (guiBoard[y][x] == OBSTACLE)
+				{
+					redStone.setPosition(x * cell_size, y * cell_size);
+					window.draw(redStone);
+				}
 			}
 		}
 		window.display();
@@ -279,8 +286,8 @@ runDahunGUI(void*)
 	draw_board();
 	window.display();
 	while(1){
-		pthread_mutex_lock(&lock);
-		pthread_cond_wait(&wakegui, &lock);
+		pthread_mutex_lock(&mlock);
+		pthread_cond_wait(&wakegui, &mlock);
 		
 		while (window.isOpen())
 		{
@@ -315,6 +322,7 @@ runDahunGUI(void*)
 						}
 						
 					}
+				
 					draw_stones();
 					break;
 				}
@@ -323,6 +331,7 @@ runDahunGUI(void*)
 		}
 		puts("signaling ai");
 		pthread_cond_signal(&wakeai);
-		pthread_mutex_unlock(&lock);
+		pthread_mutex_unlock(&mlock);
 	}
 }
+*/

@@ -99,4 +99,4 @@ void runGUI();
 
 void setRedStone();
 
-void* runDahunGUI(void*);
+//void* runDahunGUI(void*);
