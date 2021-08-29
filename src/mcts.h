@@ -23,6 +23,7 @@ using namespace std;
 
 typedef struct Move {
     short x, y;
+    inline bool operator==(const Move lhs);
 }Move;
 typedef Move* pMove;
 
@@ -31,10 +32,13 @@ typedef struct Node {
     int n;
     float mean, t, prevMax;
     vector<Node*> *children;
+    // vector<Move> *rollMoves;
     Node* parent, *prevSel;
     pMove movesLog;
 } Node;
 typedef Node* pNode;
+
+// bool Node::operator==(const Move& lhs, const Move& rhk);
 
 pNode createNode(short paraColor);
 pNode createNode(short paraColor, pNode paraParent, Move mov1, Move mov2);
@@ -46,6 +50,7 @@ class Mcts {
         short** board;
         pNode root;
         short aiColor;
+        
         Mcts();
         Mcts(short** paraBoard, short paraAiColor);
 
