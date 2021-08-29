@@ -105,7 +105,7 @@ aiPlayFirst ()
 int 
 aiPlays() 
 {
-    pNode result = m.runGame();
+    pNode result = m.runGame(mov1, mov2);
     placeStone(result->movesLog[0], aiColor);
     placeStone(result->movesLog[1], aiColor);
 
@@ -179,9 +179,9 @@ GUIreceiveUserInput()
 void 
 runGUI()
 {
-	pthread_create(&GUIRunner, NULL, runDahunGUI, NULL);
     initGUI();
 	
+	pthread_create(&GUIRunner, NULL, runDahunGUI, NULL);
     if(userColor == BLACK){
 		GUIuserPlayFirst();
         // userPlayFirst();
@@ -294,14 +294,12 @@ runDahunGUI(void*)
 					int ix = e.mouseButton.x / cell_size;
 					int iy = e.mouseButton.y / cell_size;
 
-					// Mouse Left = Black Stone
 					if (e.mouseButton.button == Mouse::Left)
 					{
 						if(toggleMov){
 							mov1.x = ix;
 							mov1.y = iy;
 							placeStone(mov1, userColor);
-							// guiBoard[iy][ix] = userColor;
 							printf("here %d %d\n", iy, ix);
 							toggleMov--;
 						}
@@ -309,11 +307,9 @@ runDahunGUI(void*)
 							mov2.x = ix;
 							mov2.y = iy;
 							placeStone(mov2, userColor);
-							// guiBoard[iy][ix] = userColor;
 							printf("here %d %d\n", iy, ix);
 							toggleMov++;
 						}
-						
 					}
 					draw_stones();
 					break;

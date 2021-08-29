@@ -31,8 +31,8 @@ todo:
 #define TIMELIMIT 20
 
 #define ROLLWINVAL 1
-#define ROLLLOSEVAL 0
-#define UCBMULT 2
+#define ROLLLOSEVAL 0.1
+#define UCBMULT 3
 // #define ROLLWINVAL 10
 // #define ROLLLOSEVAL -20
 // #define UCBMULT 5.0
@@ -64,7 +64,6 @@ createNode(short paraColor)
     newNode->parent = NULL;
     newNode->movesLog = (pMove)malloc(1);
     newNode->children = new vector<pNode>;
-    // newNode->rollMoves = new vector<Move>;
     newNode->prevSel = NULL;
     return newNode;
 }
@@ -94,16 +93,6 @@ createNode(short paraColor, pNode paraParent, Move mov1, Move mov2)
     newNode->movesLog[k].y = mov2.y;
     newNode->children = new vector<pNode>;
     newNode->prevSel = NULL;
-    // newNode->rollMoves = new vector<Move>;
-    // *(newNode->rollMoves) = *(paraParent->rollMoves);
-
-    // newNode->rollMoves->erase(remove(newNode->rollMoves->begin(), newNode->rollMoves->end(), mov1), newNode->rollMoves->end());
-    // newNode->rollMoves->erase(remove(newNode->rollMoves->begin(), newNode->rollMoves->end(), mov2), newNode->rollMoves->end());
-    // for(int i =0; i< newNode->rollMoves->size(); i++){
-    //     printf("%d %d \t", newNode->rollMoves->at(i).x, newNode->rollMoves->at(i).y);
-    // }
-    // printf("%d %d \t%d %d\n", mov1.x, mov1.y, mov2.x, mov2.y);
-    // puts(""); 
     return newNode;
 
 }
@@ -126,7 +115,6 @@ freeNode(pNode paraNode)
     free(paraNode->movesLog);
     for (int i = 0; i < paraNode->children->size(); i++)
         delete &(paraNode->children[i]);
-    // delete paraNode->rollMoves;
     delete paraNode->children;
     free(paraNode);
 }
@@ -191,7 +179,7 @@ Mcts::setRoot(short paraAiColor)
 }
 
 pNode 
-Mcts::runGame() 
+Mcts::runGame(Move userMov1, Move userMov2) 
 {
     time_t startTime = clock();
     float time = 0;
@@ -203,19 +191,18 @@ Mcts::runGame()
     printf("end of 1st expansion with size: %lum nodecnt: %d\n", treeRoot->children->size(), nodeCnt);
     
     vector<pNode> &iter = *(treeRoot->children);
-    // pNode child = NULL;
+
     for (pNode child : iter) {
         for(int rollcnt = 0; rollcnt < 100; rollcnt++){
             value = this->rollout(child);
-            // value = 5;
             // printf("%f \t", value);
             this->backprop(child, value);
         }
         // this->expansion(child);
-        // random_shuffle(child->children->begin(), child->children->end());
+        // random_shuffle(child->children->begin(), child->children->end()); // use shuffle
     }
     // printf("end of 2nd expansion nodeCnt: %d\n", nodeCnt);
-    // random_shuffle(treeRoot->children->begin(), treeRoot->children->end());
+    // random_shuffle(treeRoot->children->begin(), treeRoot->children->end()); // use shuffle
     
     do {
         tempNode = treeRoot;
@@ -228,10 +215,12 @@ Mcts::runGame()
         this->backprop(tempNode, value);
         if (i++ == 5000) {
             printf("---------%2d with nodeCnt: %d\n", j, nodeCnt);
+            time_t endTime = clock();
+            time = (endTime - startTime) / double(CLOCKS_PER_SEC);
             j++; i = 0;
         }
 
-    }while(j<20);//time < 20);
+    }while(time < 20); // j<20);
     time_t endTime = clock();
     time = (endTime - startTime) / double(CLOCKS_PER_SEC);
     printf("%d runs took: %f sec\n\n", 5000 * j, time);
@@ -316,12 +305,6 @@ Mcts::expansion(pNode currNode)
             twoGridAway.push_back(availMoves[i]);
     }
     twoGridAwaySize = twoGridAway.size();
-    // currNode->rollMoves->insert(currNode->rollMoves->end(), oneGridAway.begin(), oneGridAway.end());
-    // currNode->rollMoves->insert(currNode->rollMoves->end(), twoGridAway.begin(), twoGridAway.end());
-    // for(int i = 0; i < currNode->rollMoves->size(); i++){
-    //     printf("%d %d\t", currNode->rollMoves->at(i).x, currNode->rollMoves->at(i).y);
-    // }
-    // puts("");
 
     pNode tempNode = NULL;
     for (int i = 0; i < gridMoveSize; i++) {
@@ -350,30 +333,21 @@ Mcts::expansion(pNode currNode)
 float 
 Mcts::rollout(pNode currNode) 
 {
-    // srand(time(NULL));
-    // if(rand()%2) return 1.f;
-    // else return -2.f;
     time_t start = clock();
-    short AVAILMOVETAG = 7;
-    int size = 0, turn = this->aiColor, vicChk = 0;
+    int turn = this->aiColor, vicChk = 0;
     unsigned seed = chrono::system_clock::now().time_since_epoch().count();
     vector<Move> availMoves;
-    // vector<Move> availMoves2 = *(currNode->rollMoves);
     srand(time(NULL));
     short** boardToRoll = (short**)malloc(sizeof(short*) * BOARDSIZE);
     for (short i = 0; i < BOARDSIZE; i++) {
         boardToRoll[i] = (short*)malloc(sizeof(short) * BOARDSIZE);
         for (short j = 0; j < BOARDSIZE; j++){ 
             boardToRoll[i][j] = this->board[i][j];
-
             if (!boardToRoll[i][j]) {
                 availMoves.push_back({ j,i });
             }
         }
     }
-    // for(int i =0; i< availMoves2.size(); i++){
-    //     boardToRoll[availMoves2[i].y][availMoves2[i].x] = AVAILMOVETAG;
-    // }
 
     int k = currNode->moveSize;
     for (int i = 0; i < k; i += 2) { //TODO: gotta handle the case with black place 1 stone only, gotta check the moveslog too
@@ -393,78 +367,8 @@ Mcts::rollout(pNode currNode)
         turn = (turn == BLACK) ? WHITE : BLACK;
     }
     turn = currNode->color;
-    Move temp1, temp2, toPush;
+    Move temp1, temp2;
 
-/*
-    // random_shuffle(availMoves2.begin(), availMoves2.end());
-    shuffle(availMoves2.begin(), availMoves2.end(), default_random_engine(seed));
-    short i = -1, j = -1, iPlus = 2, iMinus = 2, jPlus = 2, jMinus = 2;
-    do{
-        temp1 = availMoves2.back();
-        availMoves2.pop_back();
-        temp2 = availMoves2.back();
-        availMoves2.pop_back();
-
-        boardToRoll[temp1.y][temp1.x] = turn;
-        boardToRoll[temp2.y][temp2.x] = turn;
-
-        vicChk = this->chkVic(boardToRoll, temp1, temp2);
-        if(vicChk){
-            // printf("\n%hd %hd, %hd %hd\t %d won!\n", temp1.x, temp1.y, temp2.x, temp2.y, vicChk);
-            // puts("y\\x 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8");
-            // for (int i = 0; i < 19; i++) {
-            //     printf("  %d ", i%10);
-            //     for (int j = 0; j < 19; j++) {
-            //         if (boardToRoll[i][j] == BLACK) printf(CYAN "o " NORM);
-            //         else if (boardToRoll[i][j] == WHITE) printf("o ");
-            //         // else if (boardToRoll[i][j] == AVAILMOVETAG) printf(PURPLE "o " NORM);
-            //         else if (boardToRoll[i][j] == OBSTACLE) printf(RED "o " NORM);
-            //         else printf(YELLOW "+ " NORM);
-            //     }
-            //     printf("\n");
-            // }
-
-            for(int i =0; i< BOARDSIZE; i++){
-                free(boardToRoll[i]);
-            }
-            free(boardToRoll);
-            time_t end = clock();
-            rollTime += (end - start) / double(CLOCKS_PER_SEC);
-            if(vicChk == this->aiColor) return ROLLWINVAL;  
-            else return ROLLLOSEVAL;
-        }
-        turn = (turn == WHITE) ? BLACK : WHITE;
-
-        i = temp1.y;
-        j = temp1.x;
-        for(int loop = 0; loop< 2; loop++){
-            if(i < 2)
-                iMinus = i;
-            else if (i > 16)
-                iPlus = 18 - i;
-            if (j < 2)
-                jMinus = j;
-            else if (j > 16)
-                jPlus = 18 - j;
-            for (short k = i - iMinus; k < i + iPlus + 1; k++) {
-                for (short l = j - jMinus; l < j + jPlus + 1; l++) {
-                    // here maybe improved by running chkPossible(), but hopefully randomness can handle.
-                    if (boardToRoll[k][l] != 0) continue; 
-                    boardToRoll[k][l] = AVAILMOVETAG;
-                    toPush.x = (short)l;
-                    toPush.y = (short)k;
-                    availMoves2.push_back({k,l});
-                }
-            }
-            iPlus = 2; iMinus = 2; jPlus = 2; jMinus = 2;
-            i = temp2.y; j = temp2.x;
-        }
-        // random_shuffle(availMoves2.begin(), availMoves2.end());
-        shuffle(availMoves2.begin(), availMoves2.end(), default_random_engine(seed));
-
-    }while(availMoves2.size());
-    */
-    // random_shuffle(availMoves.begin(), availMoves.end());
     shuffle(availMoves.begin(), availMoves.end(), default_random_engine(seed));
     do {
         temp1 = availMoves.back();
@@ -473,10 +377,7 @@ Mcts::rollout(pNode currNode)
         availMoves.pop_back();
         boardToRoll[temp1.y][temp1.x] = turn;
         boardToRoll[temp2.y][temp2.x] = turn;
-        turn = (turn == WHITE) ? BLACK : WHITE;
-
-
-
+        
         vicChk = this->chkVic(boardToRoll, temp1, temp2);
         if (vicChk) {
             for(int i =0; i < BOARDSIZE; i++){
@@ -491,6 +392,7 @@ Mcts::rollout(pNode currNode)
             else 
                 return ROLLLOSEVAL;
         }
+        turn = (turn == WHITE) ? BLACK : WHITE;
     } while (availMoves.size() > 0);
 
     for (int i = 0; i < BOARDSIZE; i++) {

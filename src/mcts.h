@@ -32,13 +32,11 @@ typedef struct Node {
     int n;
     float mean, t, prevMax;
     vector<Node*> *children;
-    // vector<Move> *rollMoves;
     Node* parent, *prevSel;
     pMove movesLog;
 } Node;
 typedef Node* pNode;
 
-// bool Node::operator==(const Move& lhs, const Move& rhk);
 
 pNode createNode(short paraColor);
 pNode createNode(short paraColor, pNode paraParent, Move mov1, Move mov2);
@@ -54,7 +52,7 @@ class Mcts {
         Mcts();
         Mcts(short** paraBoard, short paraAiColor);
 
-        pNode runGame();
+        pNode runGame(Move userMov1, Move userMov2);
         pNode select(pNode parentNode);
         void expansion(pNode currnode);
         float rollout(pNode currnode);
