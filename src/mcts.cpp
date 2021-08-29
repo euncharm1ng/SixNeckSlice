@@ -28,9 +28,9 @@ todo:
 #define MOVRANGE 2
 #define TIMELIMIT 20
 
-#define ROLLWINVAL 1
-#define ROLLLOSEVAL -10
-#define UCBMULT 15
+#define ROLLWINVAL 11
+#define ROLLLOSEVAL -30
+#define UCBMULT 9
 // #define ROLLWINVAL 10
 // #define ROLLLOSEVAL -20
 // #define UCBMULT 5.0
