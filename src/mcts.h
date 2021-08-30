@@ -23,6 +23,7 @@ using namespace std;
 
 typedef struct Move {
     short x, y;
+    inline bool operator==(const Move lhs);
 }Move;
 typedef Move* pMove;
 
@@ -36,6 +37,7 @@ typedef struct Node {
 } Node;
 typedef Node* pNode;
 
+
 pNode createNode(short paraColor);
 pNode createNode(short paraColor, pNode paraParent, Move mov1, Move mov2);
 void* freeAll (void* inputNode);
@@ -46,10 +48,11 @@ class Mcts {
         short** board;
         pNode root;
         short aiColor;
+        
         Mcts();
         Mcts(short** paraBoard, short paraAiColor);
 
-        pNode runGame();
+        pNode runGame(Move userMov1, Move userMov2);
         pNode select(pNode parentNode);
         void expansion(pNode currnode);
         float rollout(pNode currnode);
@@ -62,9 +65,10 @@ class Mcts {
         * checks the board according to the mov1 and mov2, return 1 or 2 if 
         * the user with the color wins, else return 0 for no winner found.
         */
-        int chkVic(short** board, Move mov1, Move mov2);
+        int chkVic(short** board,Move mov1, Move mov2);
         pNode returnMov();
         void findMovesOneGrid(short board[][BOARDSIZE], vector<Move>& moveVec, int tagToAvoid);
+        bool chkPossible(short** board, Move mov1);
 };
 
 
