@@ -28,15 +28,22 @@ todo:
 #include <random>
 #include <chrono>
 
-#define DEBUG 0 //to 1 to run in debug mode
-#define DEBUGVIC 0 //chkVic()
-#define DEBUGROLL 0 //rollout()
-#define MOVRANGE 2
-#define TIMELIMIT 20
-
 #define ROLLWINVAL 1
 #define ROLLLOSEVAL 1
 #define UCBMULT 3
+
+#define SIX 12
+#define FIVE 10
+#define FOUR 8
+#define THREE 6
+#define TWO 4
+#define ONE 2
+#define HALFSIX 11
+#define HALFFIVE 9
+#define HALFFOUR 7
+#define HALFTHREE 5
+#define HALFTWO 3
+#define HALFONE 1
 
 using namespace std;
 
@@ -58,7 +65,6 @@ createNode(short paraColor)
     pNode newNode = (pNode)malloc(sizeof(Node));
     newNode->t = 0;
     newNode->n = 0;
-    newNode->prevMax = 0;
     newNode->color = paraColor;
     newNode->moveSize = 0;
     newNode->mean = 0;
@@ -71,17 +77,17 @@ createNode(short paraColor)
 
 
 pNode 
-createNode(short paraColor, pNode paraParent, Move mov1, Move mov2)
+createNode(short paraColor, pNode paraParent, Move mov1, Move mov2, int toAccumulate)
 {
     nodeCnt++;
     pNode newNode = (pNode)malloc(sizeof(Node));
     newNode->t = 0;
     newNode->n = 0;
-    newNode->prevMax = 0;
     newNode->color = paraColor;
     short k = paraParent->moveSize;
     newNode->moveSize = k + 2;
     newNode->mean = 0;
+    newNode->accumulate = toAccumulate;
     newNode->parent = paraParent;
     newNode->movesLog = (pMove)malloc(sizeof(Move) * newNode->moveSize);
     for (short i = 0; i < k; i++) {
@@ -163,7 +169,7 @@ appendUCB(pNode root, short** board, pNode result){
 }
 
 
-/*---------- class mcts ----------*/
+/*---------- class minimax ----------*/
 
 Mini::Mini(){}
 Mini::Mini(short** paraBoard, short paraAiColor) 
@@ -185,56 +191,23 @@ Mini::runGame(Move userMov1, Move userMov2)
     time_t startTime = clock();
     unsigned seed = chrono::system_clock::now().time_since_epoch().count();
     float time = 0;
-    float value = 0;
-    int i = 0, j = 0;
-    pNode treeRoot = this->root, tempNode;
+    pNode treeRoot = this->root;
 
     this->expansion(treeRoot);
     printf("end of 1st expansion with size: %lum nodecnt: %d\n", treeRoot->children->size(), nodeCnt);
     
     vector<pNode> &iter = *(treeRoot->children);
-
     for (pNode child : iter) {
-        for(int rollcnt = 0; rollcnt < 100; rollcnt++){
-            value = this->rollout(child);
-            // printf("%f \t", value);
-            this->backprop(child, value);
-        }
         this->expansion(child);
-        shuffle(child->children->begin(), child->children->end(), default_random_engine(seed)); // use shuffle
-        // shuffle(availMoves.begin(), availMoves.end(), default_random_engine(seed));
     }
-    // printf("end of 2nd expansion nodeCnt: %d\n", nodeCnt);
-    // random_shuffle(treeRoot->children->begin(), treeRoot->children->end()); // use shuffle
+    printf("end of 2st expansion nodecnt: %d\n", nodeCnt);
     
-    do {
-        tempNode = treeRoot;
-        do {
-            tempNode = this->select(tempNode);
-        }while(!tempNode->children->empty()); 
-
-        value = this->rollout(tempNode);
-        // printf("value : %f\t", value);
-        this->backprop(tempNode, value);
-        if (i++ == 5000) {
-            printf("---------%2d with nodeCnt: %d\n", j, nodeCnt);
-            time_t endTime = clock();
-            time = (endTime - startTime) / double(CLOCKS_PER_SEC);
-            j++; i = 0;
-        }
-
-    }while(time < 20); // j<20);
     time_t endTime = clock();
     time = (endTime - startTime) / double(CLOCKS_PER_SEC);
-    printf("%d runs took: %f sec\n\n", 5000 * j, time);
-    printf("sel took : %f sec\n", selTime);
-    printf("roll took : %f sec\n", rollTime);
-    pNode result = this->returnMov();
+    printf("%f sec\n\n", time);
     nodeCnt= 0;
-    selTime = 0;
-    rollTime = 0;
-    appendUCB(this->root, this->board, result);
-    return result;
+    // return NULL; //FIXME
+    return treeRoot->children->at(0);
 }// end of runGame()
 
 
@@ -244,70 +217,83 @@ bool Mini::chkPossible(short** board, Move mov1) {
     short i = mov1.y, j = mov1.x;
 
     //check vertical
-    if (j < 16 && board[i][j+2] != 0 && board[i][j+2] == board[i][j+3]) return true;
-    else if (j > 2 && board[i][j-2] != 0 && board[i][j-2] == board[i][j-3]) return true;
+    if (j < 16 && board[i][j+2] != EMPTY && board[i][j+2] == board[i][j+3]) return true;
+    else if (j > 2 && board[i][j-2] != EMPTY && board[i][j-2] == board[i][j-3]) return true;
 
     //check horizion
-    else if (i < 16 && board[i+2][j] != 0 && board[i+2][j] == board[i+3][j]) return true;
-    else if (i > 2 && board[i-2][j] != 0 && board[i-2][j] == board[i-3][j]) return true;
+    else if (i < 16 && board[i+2][j] != EMPTY && board[i+2][j] == board[i+3][j]) return true;
+    else if (i > 2 && board[i-2][j] != EMPTY && board[i-2][j] == board[i-3][j]) return true;
 
     //check right-up diagonal
-    else if (i < 16 && j > 2 && board[i+2][j-2] != 0 && board[i+2][j-2] == board[i+3][j-3]) return true;
-    else if (i > 2 && j < 16 && board[i-2][j+2] !=0 && board[i-2][j+2] == board[i-3][j+3]) return true;
+    else if (i < 16 && j > 2 && board[i+2][j-2] != EMPTY && board[i+2][j-2] == board[i+3][j-3]) return true;
+    else if (i > 2 && j < 16 && board[i-2][j+2] != EMPTY && board[i-2][j+2] == board[i-3][j+3]) return true;
 
     //check left-up diagonal
-    else if (i > 2 && j > 2 && board[i-2][j-2] != 0 && board[i-2][j-2] == board[i-3][j-3]) return true;
-    else if (i < 16 && j < 16 & board[i+2][j+2] != 0 && board[i+2][j+2] == board[i+3][j+3]) return true;
+    else if (i > 2 && j > 2 && board[i-2][j-2] != EMPTY && board[i-2][j-2] == board[i-3][j-3]) return true;
+    else if (i < 16 && j < 16 & board[i+2][j+2] != EMPTY && board[i+2][j+2] == board[i+3][j+3]) return true;
     else return false;
 }
 
 void 
-Mini::expansion(pNode currNode) 
+Mini::expansion(pNode currNode)
 {
     short child_color = (currNode->color == BLACK) ? WHITE : BLACK;
-    int gridMoveSize = 0, availMoveSize = 0, twoGridAwaySize = 0;
+    int gridMoveSize, availMoveSize, twoGridAwaySize;
     Move mov1, mov2;
-    vector<Move> oneGridAway, availMoves, twoGridAway;
-    short** placeFirstMov = (short**)malloc(sizeof(short*) * BOARDSIZE);
-    for(int i =0; i< BOARDSIZE; i++){
-        placeFirstMov[i] = (short*)malloc(sizeof(short) * BOARDSIZE);
-        for(int j =0; j< BOARDSIZE; j++){
-            placeFirstMov[i][j] = this->board[i][j];
+    vector<Move> oneGridAway, twoGridAway;
+    short board[BOARDSIZE][BOARDSIZE];
+    short turn = this->aiColor;
+
+    for (int i = 0; i < BOARDSIZE; i++) {
+        for (int j = 0; j < BOARDSIZE; j++)
+            board[i][j] = this->board[i][j];
+    }
+    int k = currNode->moveSize;
+    for (int i = 0; i < k; i += 2) {
+        board[currNode->movesLog[i].y][currNode->movesLog[i].x] = turn;
+        board[currNode->movesLog[i + 1].y][currNode->movesLog[i + 1].x] = turn;
+        turn = (turn == BLACK) ? WHITE : BLACK;
+    }
+
+    this->findMoves(currNode, oneGridAway, twoGridAway, board);
+
+    // for(int i = 0; i < BOARDSIZE; i++){
+    //     for(int j = 0; j < BOARDSIZE; j++){
+    //         if(board[i][j] > OBSTACLE) board[i][j] = EMPTY;
+    //     }
+    // }
+
+    puts("y\\x 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8");
+    for (int i = 0; i < 19; i++) {
+        printf("  %d ", i%10);
+        for (int j = 0; j < 19; j++) {
+            if (board[i][j] == BLACK) printf(CYAN "o " NORM);
+            else if (board[i][j] == WHITE) printf(PURPLE "o " NORM);
+            else if (board[i][j] == OBSTACLE) printf(RED "o " NORM);
+            else if (board[i][j] == EMPTY) printf(YELLOW "+ " NORM);
+            else printf("%d ", board[i][j]);
         }
+        printf("\n");
     }
 
-    this->findMoves(currNode, oneGridAway, availMoves);
-    
     gridMoveSize = oneGridAway.size();
-    availMoveSize = availMoves.size();
-
-    for(int i =0; i< availMoveSize; i++){
-        if(chkPossible(this->board, availMoves[i]))
-            twoGridAway.push_back(availMoves[i]);
-    }
     twoGridAwaySize = twoGridAway.size();
 
     pNode tempNode = NULL;
     for (int i = 0; i < gridMoveSize; i++) {
-        mov1 = oneGridAway[i];
+        mov1 = oneGridAway[i]; //calc first move first then, check the relationship btw mov1 and mov2, if no relationship just accumulate, if there is relationship, deduct mov1's points and accumulate mov2.
         for (int j = i + 1; j < gridMoveSize; j++) {
             mov2 = oneGridAway[j];
-            tempNode = createNode(child_color, currNode, mov1, mov2);
+            tempNode = createNode(child_color, currNode, mov1, mov2, 0);
             currNode->children->push_back(tempNode);
         }
         for (int j = 0; j < twoGridAwaySize; j++) {
             mov2 = twoGridAway[j];
-            tempNode = createNode(child_color, currNode, mov1, mov2);
+            tempNode = createNode(child_color, currNode, mov1, mov2, 0);
             currNode->children->push_back(tempNode);
         }
     }
     currNode->children->shrink_to_fit();
-    
-    for(int i =0; i< BOARDSIZE; i++){
-        free(placeFirstMov[i]);
-    }
-    free(placeFirstMov);
-
 }// end of expansion()
 
 
@@ -316,8 +302,8 @@ Mini::findMovesOneGrid(short board[][BOARDSIZE], vector<Move>& moveVec, int tagT
 {
     int iPlus = 1, iMinus = 1, jPlus = 1, jMinus = 1;
     Move oneGridMove;
-    for(int i = 0; i < 19; i++){
-        for(int j = 0; j < 19; j++){
+    for(int i = 0; i < BOARDSIZE; i++){
+        for(int j = 0; j < BOARDSIZE; j++){
             if(board[i][j] > 0 && board[i][j] < tagToAvoid){
                 if(i == 0)
                     iMinus = 0;
@@ -343,27 +329,32 @@ Mini::findMovesOneGrid(short board[][BOARDSIZE], vector<Move>& moveVec, int tagT
 }
 
 void 
-Mini::findMoves(pNode currNode, vector<Move>& oneGridAway, vector<Move>& availMoves) 
+Mini::findMoves(pNode currNode, vector<Move>& oneGridAway, vector<Move>& twoGridAway, short board[][BOARDSIZE]) 
 {
-    short tempBoard[BOARDSIZE][BOARDSIZE]; //score board
-    short board[BOARDSIZE][BOARDSIZE]; // stone board
-
-    for (int i = 0; i < 19; i++) {
-        for (int j = 0; j < 19; j++)
-            tempBoard[i][j] = 2;
-    }
+    // short board[BOARDSIZE][BOARDSIZE]; // stone board
+    vector<Move> availMoves;
+    // short turn = this->aiColor;
 
     // build board according to the movelog
-    for (int i = 0; i < 19; i++) {
-        for (int j = 0; j < 19; j++)
-            board[i][j] = this->board[i][j];
-    }
-    int k = currNode->moveSize;
-    for (int i = 0; i < k; i++) {
-        board[currNode->movesLog[i].y][currNode->movesLog[i].x] = 3; //just for find move
-    }
+    // for (int i = 0; i < BOARDSIZE; i++) {
+    //     for (int j = 0; j < BOARDSIZE; j++)
+    //         board[i][j] = this->board[i][j];
+    // }
+    // int k = currNode->moveSize;
+    // for (int i = 0; i < k; i += 2) {
+    //     board[currNode->movesLog[i].y][currNode->movesLog[i].x] = turn;
+    //     board[currNode->movesLog[i + 1].y][currNode->movesLog[i + 1].x] = turn;
+    //     turn = (turn == BLACK) ? WHITE : BLACK;
+    // }
     this->findMovesOneGrid(board, oneGridAway, 4);
     this->findMovesOneGrid(board, availMoves, 5);
+
+    int availMoveSize = availMoves.size();
+
+    for(int i =0; i< availMoveSize; i++){
+        if(chkPossible(this->board, availMoves[i]))
+            twoGridAway.push_back(availMoves[i]);
+    }
 }
 
 int 
@@ -442,4 +433,10 @@ Mini::returnMov()
         }
     }
     return toReturn;
+}
+
+int
+Mini::evalAccum(short** board, Move mov)
+{
+
 }

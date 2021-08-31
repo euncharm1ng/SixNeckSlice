@@ -9,6 +9,7 @@
 #define BOARDSIZE 19
 #define WHITE 2
 #define BLACK 1
+#define EMPTY 0
 #define OBSTACLE 3
 
 #define RED "\033[31m"
@@ -39,7 +40,7 @@ typedef Node* pNode;
 
 
 pNode createNode(short paraColor);
-pNode createNode(short paraColor, pNode paraParent, Move mov1, Move mov2);
+pNode createNode(short paraColor, pNode paraParent, Move mov1, Move mov2, int toAccumulate);
 void* freeAll (void* inputNode);
 void freeNode(pNode paraNode);
 
@@ -56,13 +57,13 @@ class Mini{
         void expansion(pNode currnode);
 
         void setRoot(short paraAiColor);
-        void findMoves(pNode currNode, vector<Move>& oneGridAway, vector<Move>& availMoves);
+        void findMoves(pNode currNode, vector<Move>& oneGridAway, vector<Move>& availMoves, short board[][BOARDSIZE]);
         void findMovesOneGrid(short board[][BOARDSIZE], vector<Move>& moveVec, int tagToAvoid);
 
         void evalRoot();
 
         /* evaluate the node's board with accumulated val*/
-        void evalAccum();
+        int evalAccum(short** board, Move mov);
         
         /* decide what moves to make */
         void chooseNode();

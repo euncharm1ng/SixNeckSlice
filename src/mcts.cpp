@@ -293,13 +293,13 @@ Mcts::expansion(pNode currNode)
     int gridMoveSize = 0, availMoveSize = 0, twoGridAwaySize = 0;
     Move mov1, mov2;
     vector<Move> oneGridAway, availMoves, twoGridAway;
-    short** placeFirstMov = (short**)malloc(sizeof(short*) * BOARDSIZE);
-    for(int i =0; i< BOARDSIZE; i++){
-        placeFirstMov[i] = (short*)malloc(sizeof(short) * BOARDSIZE);
-        for(int j =0; j< BOARDSIZE; j++){
-            placeFirstMov[i][j] = this->board[i][j];
-        }
-    }
+    // short** placeFirstMov = (short**)malloc(sizeof(short*) * BOARDSIZE);
+    // for(int i =0; i< BOARDSIZE; i++){
+    //     placeFirstMov[i] = (short*)malloc(sizeof(short) * BOARDSIZE);
+    //     for(int j =0; j< BOARDSIZE; j++){
+    //         placeFirstMov[i][j] = this->board[i][j];
+    //     }
+    // }
 
     this->findMoves(currNode, oneGridAway, availMoves);
     
@@ -328,10 +328,10 @@ Mcts::expansion(pNode currNode)
     }
     currNode->children->shrink_to_fit();
     
-    for(int i =0; i< BOARDSIZE; i++){
-        free(placeFirstMov[i]);
-    }
-    free(placeFirstMov);
+    // for(int i =0; i< BOARDSIZE; i++){
+    //     free(placeFirstMov[i]);
+    // }
+    // free(placeFirstMov);
 
 }// end of expansion()
 
@@ -340,7 +340,8 @@ float
 Mcts::rollout(pNode currNode) 
 {
     time_t start = clock();
-    int turn = this->aiColor, vicChk = 0;
+    short turn = this->aiColor;
+    int vicChk = 0;
     unsigned seed = chrono::system_clock::now().time_since_epoch().count();
     vector<Move> availMoves;
     // srand(time(NULL));

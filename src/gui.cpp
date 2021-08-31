@@ -16,7 +16,8 @@ int cell_size = 30;
 int freeCount;
 short** guiBoard;
 short aiColor, userColor;
-Mcts m;
+// Mcts m;
+Mini m;
 pthread_t freer, GUIRunner;
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t wakegui = PTHREAD_COND_INITIALIZER;
@@ -41,7 +42,8 @@ initGUI ()
     printf("Then AiColor is %hd\n", aiColor);
     setRedStone();
 
-    m = Mcts(guiBoard, aiColor);
+    // m = Mcts(guiBoard, aiColor);
+	m = Mini(guiBoard, aiColor);
 	mov1.x = mov1.y = mov2.x = mov2.y = 0;
 }
 
