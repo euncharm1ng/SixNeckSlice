@@ -37,9 +37,6 @@ todo:
 #define ROLLWINVAL 1
 #define ROLLLOSEVAL 1
 #define UCBMULT 3
-// #define ROLLWINVAL 10
-// #define ROLLLOSEVAL -20
-// #define UCBMULT 5.0
 
 using namespace std;
 

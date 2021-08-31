@@ -179,9 +179,10 @@ GUIreceiveUserInput()
 void 
 runGUI()
 {
+	pthread_create(&GUIRunner, NULL, runDahunGUI, NULL);
     initGUI();
 	
-	pthread_create(&GUIRunner, NULL, runDahunGUI, NULL);
+	
     if(userColor == BLACK){
 		GUIuserPlayFirst();
         // userPlayFirst();
@@ -278,6 +279,7 @@ runDahunGUI(void*)
 
 	draw_board();
 	window.display();
+
 	while(1){
 		pthread_mutex_lock(&lock);
 		pthread_cond_wait(&wakegui, &lock);
