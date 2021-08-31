@@ -165,8 +165,8 @@ appendUCB(pNode root, short** board, pNode result){
 
 /*---------- class mcts ----------*/
 
-Mcts::Mcts(){}
-Mcts::Mcts(short** paraBoard, short paraAiColor) 
+Mini::Mini(){}
+Mini::Mini(short** paraBoard, short paraAiColor) 
 {
     this->aiColor = paraAiColor;
     this->board = paraBoard;
@@ -174,13 +174,13 @@ Mcts::Mcts(short** paraBoard, short paraAiColor)
 }
 
 void 
-Mcts::setRoot(short paraAiColor)
+Mini::setRoot(short paraAiColor)
 {
     this->root = createNode(paraAiColor);
 }
 
 pNode 
-Mcts::runGame(Move userMov1, Move userMov2) 
+Mini::runGame(Move userMov1, Move userMov2) 
 {
     time_t startTime = clock();
     unsigned seed = chrono::system_clock::now().time_since_epoch().count();
@@ -237,31 +237,9 @@ Mcts::runGame(Move userMov1, Move userMov2)
     return result;
 }// end of runGame()
 
-pNode 
-Mcts::select(pNode parentNode) 
-{
-    time_t start = clock();
-    float max = -1000000, chk = 0;
-    pNode returnNode = NULL;
-    float parentN = log((float)parentNode->n);
 
-    vector<pNode>& iter = *(parentNode->children);
-    float tempNodeN = 0;
-    for (pNode tempNode : iter) {
-        tempNodeN = (float)tempNode->n;
-        if (tempNodeN == 0) return tempNode;
-        chk = tempNode->mean + UCBMULT * (sqrt(parentN / tempNodeN));
-        if (chk > max) {
-            max = chk;
-            returnNode = tempNode;
-        }
-    }
-    time_t end = clock(); 
-    selTime += (end - start) / double(CLOCKS_PER_SEC);
-    return returnNode;
-}// end of select()
 
-bool Mcts::chkPossible(short** board, Move mov1) {
+bool Mini::chkPossible(short** board, Move mov1) {
     //TODO: add cases to handle red stone.
     short i = mov1.y, j = mov1.x;
 
@@ -284,7 +262,7 @@ bool Mcts::chkPossible(short** board, Move mov1) {
 }
 
 void 
-Mcts::expansion(pNode currNode) 
+Mini::expansion(pNode currNode) 
 {
     short child_color = (currNode->color == BLACK) ? WHITE : BLACK;
     int gridMoveSize = 0, availMoveSize = 0, twoGridAwaySize = 0;
@@ -333,94 +311,8 @@ Mcts::expansion(pNode currNode)
 }// end of expansion()
 
 
-float 
-Mcts::rollout(pNode currNode) 
-{
-    time_t start = clock();
-    int turn = this->aiColor, vicChk = 0;
-    unsigned seed = chrono::system_clock::now().time_since_epoch().count();
-    vector<Move> availMoves;
-    // srand(time(NULL));
-    short** boardToRoll = (short**)malloc(sizeof(short*) * BOARDSIZE);
-    for (short i = 0; i < BOARDSIZE; i++) {
-        boardToRoll[i] = (short*)malloc(sizeof(short) * BOARDSIZE);
-        for (short j = 0; j < BOARDSIZE; j++){ 
-            boardToRoll[i][j] = this->board[i][j];
-            if (!boardToRoll[i][j]) {
-                availMoves.push_back({ j,i });
-            }
-        }
-    }
-
-    int k = currNode->moveSize;
-    for (int i = 0; i < k; i += 2) { //TODO: gotta handle the case with black place 1 stone only, gotta check the moveslog too
-        boardToRoll[currNode->movesLog[i].y][currNode->movesLog[i].x] = turn;
-        boardToRoll[currNode->movesLog[i + 1].y][currNode->movesLog[i + 1].x] = turn;
-        if(vicChk = chkVic(boardToRoll, currNode->movesLog[i], currNode->movesLog[i+1])){
-            for(int i =0; i < BOARDSIZE; i++){
-                free(boardToRoll[i]);
-            }
-            free(boardToRoll);
-            time_t end = clock(); 
-            rollTime += (end - start) / double(CLOCKS_PER_SEC);
-            // printf("rollout() won immediately\n");
-            if(vicChk == this->aiColor) return ROLLWINVAL;
-            else return ROLLLOSEVAL;
-        }
-        turn = (turn == BLACK) ? WHITE : BLACK;
-    }
-    turn = currNode->color;
-    Move temp1, temp2;
-
-    shuffle(availMoves.begin(), availMoves.end(), default_random_engine(seed));
-    do {
-        temp1 = availMoves.back();
-        availMoves.pop_back();
-        temp2 = availMoves.back();
-        availMoves.pop_back();
-        boardToRoll[temp1.y][temp1.x] = turn;
-        boardToRoll[temp2.y][temp2.x] = turn;
-        
-        vicChk = this->chkVic(boardToRoll, temp1, temp2);
-        if (vicChk) {
-            for(int i =0; i < BOARDSIZE; i++){
-                free(boardToRoll[i]);
-            }
-            free(boardToRoll);
-            time_t end = clock(); 
-            rollTime += (end - start) / double(CLOCKS_PER_SEC);
-            // printf("--%d ", vicChk);
-            if (vicChk == this->aiColor) 
-                return ROLLWINVAL;
-            else 
-                return ROLLLOSEVAL;
-        }
-        turn = (turn == WHITE) ? BLACK : WHITE;
-    } while (availMoves.size() > 0);
-
-    for (int i = 0; i < BOARDSIZE; i++) {
-        free(boardToRoll[i]);
-    }
-    free(boardToRoll);
-    time_t end = clock(); 
-    rollTime += (end - start) / double(CLOCKS_PER_SEC);
-    return 0;
-}// end of rollout()
-
-void
-Mcts::backprop(pNode currNode, float value) 
-{
-    while (currNode->parent != NULL) {
-        currNode->n += 1;
-        currNode->t += value;
-        currNode->mean = currNode->t / (float)currNode->n;
-        currNode = currNode->parent;
-    }
-    currNode->n += 1;
-}// end of backprop()
-
 void 
-Mcts::findMovesOneGrid(short board[][BOARDSIZE], vector<Move>& moveVec, int tagToAvoid) 
+Mini::findMovesOneGrid(short board[][BOARDSIZE], vector<Move>& moveVec, int tagToAvoid) 
 {
     int iPlus = 1, iMinus = 1, jPlus = 1, jMinus = 1;
     Move oneGridMove;
@@ -451,7 +343,7 @@ Mcts::findMovesOneGrid(short board[][BOARDSIZE], vector<Move>& moveVec, int tagT
 }
 
 void 
-Mcts::findMoves(pNode currNode, vector<Move>& oneGridAway, vector<Move>& availMoves) 
+Mini::findMoves(pNode currNode, vector<Move>& oneGridAway, vector<Move>& availMoves) 
 {
     short tempBoard[BOARDSIZE][BOARDSIZE]; //score board
     short board[BOARDSIZE][BOARDSIZE]; // stone board
@@ -475,7 +367,7 @@ Mcts::findMoves(pNode currNode, vector<Move>& oneGridAway, vector<Move>& availMo
 }
 
 int 
-Mcts::chkVic(short** board, Move mov1, Move mov2) 
+Mini::chkVic(short** board, Move mov1, Move mov2) 
 {
     int count = 0;
     short color = board[mov1.y][mov1.x];
@@ -537,7 +429,7 @@ Mcts::chkVic(short** board, Move mov1, Move mov2)
 }// end of chkVic()
 
 pNode
-Mcts::returnMov() 
+Mini::returnMov() 
 {
     float max = -1000000, value = 0;
     pNode toReturn = NULL, rootNode = this->root;
