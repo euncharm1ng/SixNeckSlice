@@ -1,4 +1,5 @@
-#include "mcts.h"
+// #include "mcts.h"
+#include "minimax.h"
 #include <SFML/Graphics.hpp>
 #include <cstdio>
 #include <iostream>

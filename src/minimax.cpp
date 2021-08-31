@@ -13,7 +13,7 @@ todo:
 
 */
 
-#include "mcts.h"
+#include "minimax.h"
 #include <stdlib.h>
 #include <time.h>
 #include <algorithm> 
