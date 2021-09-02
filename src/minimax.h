@@ -63,7 +63,7 @@ class Mini{
         void evalRoot();
 
         /* evaluate the node's board with accumulated val*/
-        int evalAccum(short** board, Move mov);
+        int evalAccum1(short** board, Move mov, short color);
         
         /* decide what moves to make */
         void chooseNode();
@@ -76,6 +76,7 @@ class Mini{
         int chkVic(short** board,Move mov1, Move mov2);
         pNode returnMov();
         bool chkPossible(short** board, Move mov1);
+        int chkRelation(Move mov1, Move mov2);
 };
 
 

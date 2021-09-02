@@ -257,24 +257,24 @@ Mini::expansion(pNode currNode)
 
     this->findMoves(currNode, oneGridAway, twoGridAway, board);
 
-    // for(int i = 0; i < BOARDSIZE; i++){
-    //     for(int j = 0; j < BOARDSIZE; j++){
-    //         if(board[i][j] > OBSTACLE) board[i][j] = EMPTY;
-    //     }
-    // }
-
-    puts("y\\x 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8");
-    for (int i = 0; i < 19; i++) {
-        printf("  %d ", i%10);
-        for (int j = 0; j < 19; j++) {
-            if (board[i][j] == BLACK) printf(CYAN "o " NORM);
-            else if (board[i][j] == WHITE) printf(PURPLE "o " NORM);
-            else if (board[i][j] == OBSTACLE) printf(RED "o " NORM);
-            else if (board[i][j] == EMPTY) printf(YELLOW "+ " NORM);
-            else printf("%d ", board[i][j]);
+    for(int i = 0; i < BOARDSIZE; i++){
+        for(int j = 0; j < BOARDSIZE; j++){
+            if(board[i][j] > OBSTACLE) board[i][j] = EMPTY;
         }
-        printf("\n");
     }
+
+    // puts("y\\x 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8");
+    // for (int i = 0; i < 19; i++) {
+    //     printf("  %d ", i%10);
+    //     for (int j = 0; j < 19; j++) {
+    //         if (board[i][j] == BLACK) printf(CYAN "o " NORM);
+    //         else if (board[i][j] == WHITE) printf(PURPLE "o " NORM);
+    //         else if (board[i][j] == OBSTACLE) printf(RED "o " NORM);
+    //         else if (board[i][j] == EMPTY) printf(YELLOW "+ " NORM);
+    //         else printf("%d ", board[i][j]);
+    //     }
+    //     printf("\n");
+    // }
 
     gridMoveSize = oneGridAway.size();
     twoGridAwaySize = twoGridAway.size();
@@ -331,26 +331,11 @@ Mini::findMovesOneGrid(short board[][BOARDSIZE], vector<Move>& moveVec, int tagT
 void 
 Mini::findMoves(pNode currNode, vector<Move>& oneGridAway, vector<Move>& twoGridAway, short board[][BOARDSIZE]) 
 {
-    // short board[BOARDSIZE][BOARDSIZE]; // stone board
     vector<Move> availMoves;
-    // short turn = this->aiColor;
-
-    // build board according to the movelog
-    // for (int i = 0; i < BOARDSIZE; i++) {
-    //     for (int j = 0; j < BOARDSIZE; j++)
-    //         board[i][j] = this->board[i][j];
-    // }
-    // int k = currNode->moveSize;
-    // for (int i = 0; i < k; i += 2) {
-    //     board[currNode->movesLog[i].y][currNode->movesLog[i].x] = turn;
-    //     board[currNode->movesLog[i + 1].y][currNode->movesLog[i + 1].x] = turn;
-    //     turn = (turn == BLACK) ? WHITE : BLACK;
-    // }
     this->findMovesOneGrid(board, oneGridAway, 4);
     this->findMovesOneGrid(board, availMoves, 5);
 
     int availMoveSize = availMoves.size();
-
     for(int i =0; i< availMoveSize; i++){
         if(chkPossible(this->board, availMoves[i]))
             twoGridAway.push_back(availMoves[i]);
@@ -436,7 +421,69 @@ Mini::returnMov()
 }
 
 int
-Mini::evalAccum(short** board, Move mov)
+Mini::evalAccum1(short** board, Move mov, short aiColor)
 {
+    //TODO: check if a side is blocked
+    int stoneRight = 0, stoneLeft = 0, stoneCenter = 0, allCount = 1, gapCnt = 0;
+    bool firstGap = true, secondGap = true, leftBlocked = true, rightBlocked = true;
+    for(int i = mov.x + 1; i < 19; i++){
+        if(board[mov.y][i] == aiColor){
+            if(firstGap) stoneCenter++;
+            else if(secondGap) stoneRight++;
+            allCount++;
+            // if(gapCnt > 1) rightBlocked = false;
+            gapCnt = 0;
+        }
+        else if(board[mov.y][i] == EMPTY){
+            if(firstGap) firstGap = false;
+            else secondGap = false;
+            allCount++;
+            gapCnt++;
+        } 
+        else break;
+        if(gapCnt > 1) rightBlocked = false;
+    }
+    firstGap = true; secondGap = true; gapCnt = 0;
+    for(int i = mov.x -1; i > -1; i--){
+        if(board[mov.y][i] == aiColor){
+            if(firstGap) stoneCenter++;
+            else if(secondGap) stoneLeft++;
+            allCount++;
+            // if(gapCnt > 1) leftBlocked = false;
+            gapCnt = 0;
+        }
+        else if(board[mov.y][i] == EMPTY){
+            if(firstGap) firstGap = false;
+            else secondGap = false;
+            allCount++;
+            gapCnt++;
+        }
+        else break;
+        if(gapCnt > 1) leftBlocked = false;
+    }
+    
+    printf("left: %d, center: %d, right, %d, all %d\n", stoneLeft, stoneCenter, stoneRight, allCount);
 
+    if(allCount < 6) printf("dead stones\n");
+    else if(stoneRight == 0 || stoneLeft == 0) {
+        printf("%d stones\n", stoneCenter + stoneRight + stoneLeft);
+        if(leftBlocked) printf("left blocked\n");
+        if(rightBlocked) printf("right blocked\n");
+    }
+    else {
+        if(leftBlocked) printf("%d at left blocked\n", stoneCenter + stoneLeft);
+        else printf("%d at left unblocked\n", stoneCenter + stoneLeft);
+        if(rightBlocked) printf("%d at right blocked\n", stoneCenter + stoneRight);
+        else printf("%d at right unblocked\n", stoneCenter + stoneLeft);
+    }
+}
+
+int 
+Mini::chkRelation(Move mov1, Move mov2)
+{
+    if(mov1.x == mov2.x) return 1; // horizontal
+    else if(mov1.y == mov2.y) return 2; // vertical
+    else if(mov1.x - mov2.x == mov1.y - mov2.y) return 3; // top left to bot right
+    else if(mov1.x - mov2.x == 0 - mov1.y - mov2.y) return 4; // top right to bot left
+    else return 0;
 }
