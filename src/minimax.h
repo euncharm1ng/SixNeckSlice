@@ -60,7 +60,8 @@ class Mini{
         void findMoves(pNode currNode, vector<Move>& oneGridAway, vector<Move>& availMoves, short board[][BOARDSIZE]);
         void findMovesOneGrid(short board[][BOARDSIZE], vector<Move>& moveVec, int tagToAvoid);
 
-        void evalRoot();
+        void evalRoot(short** board, short aiColor);
+        int evalOneRow(short* type, short* count, short aiColor);
 
         /* evaluate the node's board with accumulated val*/
         int evalAccum1(short** board, Move mov, short color);

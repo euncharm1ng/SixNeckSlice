@@ -48,8 +48,7 @@ todo:
 using namespace std;
 
 static int nodeCnt = 0;
-static float rollTime = 0;
-static float selTime = 0;
+const int scoreArr[13] = {0, HALFONE, ONE, HALFTWO, TWO, HALFTHREE, THREE, HALFFOUR, FOUR, HALFFIVE, FIVE, HALFSIX, SIX};
 ofstream file;
 
 bool
@@ -365,7 +364,7 @@ Mini::chkVic(short** board, Move mov1, Move mov2)
         if (count > 6) return color;
         count = 0;
 
-        //check vertical 
+        //check ertical 
         for (int i = movY; i < 19; i++) {
             if (board[i][movX] == color) count++;
             else break;
@@ -420,6 +419,308 @@ Mini::returnMov()
     return toReturn;
 }
 
+
+int
+Mini::evalOneRow(short type[BOARDSIZE], short count[BOARDSIZE], short aiColor)
+{
+    // for(int i =0; i < BOARDSIZE; i++){
+    //     printf("%2d ", type[i]);
+    // }
+    // puts("");
+    // for(int i =0; i < BOARDSIZE; i++)
+    //     printf("%2d ", count[i]);
+    // puts("");
+        //TODO: gotta hadle red stone
+    short currColor, currCnt = 1, gapCnt = 0, frontGap = 0;
+    int looper = 0, score = 0;
+    bool blockedL = true, blockedR = false;
+
+    currColor = type[looper];
+    do{
+        if(currColor == BLACK || currColor == WHITE){
+            currCnt = count[looper];
+            int tempLooper = looper;
+            while(1){
+                tempLooper++;
+                if(type[tempLooper] == EMPTY){
+                    gapCnt += count[tempLooper];
+                    if(gapCnt < 3) continue;
+                    else if(count[tempLooper] > 1) ;
+                    else if(type[tempLooper + 1] != currColor) 
+                        blockedR = true;
+                }
+                else if(type[tempLooper] == currColor){
+                    currCnt += count[tempLooper];
+                    continue;
+                }
+                else blockedR = true;
+
+                looper = tempLooper - 1;
+                break;
+            }
+            // if(frontGap+ currCnt + gapCnt < 6) printf("%dDEAD ", frontGap + currCnt + gapCnt);
+            // if(blockedR) printf("blockedR ");
+            // if(blockedL) printf("blockedL ");
+            // printf("stone %d with %d count\n", currColor, currCnt);
+            
+            if(frontGap + currCnt + gapCnt < 6) ;
+            else{
+                currCnt *= 2;
+                if(blockedL || blockedR) currCnt--;
+                if(currColor == aiColor) 
+                    score += scoreArr[currCnt];
+                else   
+                    score -= scoreArr[currCnt];
+            }
+            currCnt = 0; gapCnt = 0;
+        }
+        else if (currColor == EMPTY) frontGap = count[looper]; //FIXME, frontGap is tricky
+
+        blockedL = blockedR; blockedR = false; //FIXME, |_0 blockedL uncatched
+        currColor = type[++looper];
+    }while(currColor != -1);
+    return score;
+}
+
+void 
+Mini::evalRoot(short** board, short aiColor)
+{
+    short currColor, currCnt = 1, index = 0;
+    short type[BOARDSIZE], count[BOARDSIZE];
+    int k, score = 0;
+    memset(type, -1, sizeof(short) * BOARDSIZE);
+    memset(count, -1, sizeof(short) * BOARDSIZE);
+
+    for(int i =0; i < BOARDSIZE; i++){ //horizontal 
+        index = 0; currCnt = 1;   
+        currColor = board[i][0];
+        for(int j = 1; j < BOARDSIZE; j++){
+            if(board[i][j] == currColor) currCnt++;
+            else{
+                type[index] = currColor;
+                count[index++] = currCnt;
+                currColor = board[i][j];
+                currCnt = 1;
+            }
+        }
+        type[index] = currColor;
+        count[index++] = currCnt;
+        type[index] = -1;
+        count[index++] = -1;
+        score += this->evalOneRow(type, count, aiColor);
+        // printf("%d %d\n", i, this->evalOneRow(type, count, aiColor));
+    }
+
+    for(int j = 0; j < BOARDSIZE; j++){ //vertical
+        index = 0; currCnt = 1;   
+        currColor = board[0][j];
+        for(int i = 1; i < BOARDSIZE; i++){
+            if(board[i][j] == currColor) currCnt++;
+            else{
+                type[index] = currColor;
+                count[index++] = currCnt;
+                currColor = board[i][j];
+                currCnt = 1;
+            }
+        }
+        type[index] = currColor;
+        count[index++] = currCnt;
+        type[index] = -1;
+        count[index++] = -1;
+
+        score += this->evalOneRow(type, count, aiColor);
+        // printf("%d %d\n", j, this->evalOneRow(type, count, aiColor));
+    }
+
+    for(int i = 0; i < 14; i++){ //top left to bot right, left top down
+        k = i+1;
+        index = 0; currCnt =1;
+        currColor = board[i][0];
+        for(int j = 1; j < BOARDSIZE - i; j++, k++){
+            if(board[k][j] == currColor) currCnt++;
+            else{
+                type[index] = currColor;
+                count[index++] = currCnt;
+                currColor = board[k][j];
+                currCnt = 1;
+            }
+        }
+        type[index] = currColor;
+        count[index++] = currCnt;
+        type[index] = -1;
+        count[index++] = -1;
+
+        // printf("%d %d\n", i, this->evalOneRow(type, count, aiColor));
+        score += this->evalOneRow(type, count, aiColor);
+    }
+    
+
+    for(int i =1; i < 14; i++){ //top left to bot right, top left to right
+        k = 1;
+        index = 0; currCnt = 1;
+        currColor = board[0][i];
+        for(int j = i+1; j < BOARDSIZE; j++, k++){
+            if(board[k][j] == currColor) currCnt++;
+            else{
+                type[index] = currColor;
+                count[index++] = currCnt;
+                currColor = board[k][j];
+                currCnt = 1;
+            }
+        }
+        type[index] = currColor;
+        count[index++] = currCnt;
+        type[index] = -1;
+        count[index++] = -1;
+
+        // printf("%d %d\n", i, this->evalOneRow(type, count, aiColor));
+        score += this->evalOneRow(type, count, aiColor);
+    }
+
+    for(int i = 18; i > 4; i--){ // bot left to top right, left bot to top
+        k = i -1;
+        index = 0; currCnt = 1;
+        currColor = board[i][0];
+        for(int j = 1; j < i + 1; j++, k--){
+            if(board[k][j] == currColor) currCnt++;
+            else{
+                type[index] = currColor;
+                count[index++] = currCnt;
+                currColor = board[k][j];
+                currCnt = 1;
+            }
+        }
+        type[index] = currColor;
+        count[index++] = currCnt;
+        type[index] = -1;
+        count[index++] = -1;
+
+        // printf("%d %d\n", i, this->evalOneRow(type, count, aiColor));
+        score += this->evalOneRow(type, count, aiColor);
+    }
+
+    for(int i =1; i < 14; i++){ // bot left to top right, bot left to right
+        k = 17;
+        index = 0; currCnt = 1;
+        currColor = board[18][i];
+        for(int j = i+1; j < BOARDSIZE; j++, k--){
+            if(board[k][j] == currColor) currCnt++;
+            else{
+                type[index] = currColor;
+                count[index++] = currCnt;
+                currColor = board[k][j];
+                currCnt = 1;
+            }
+        }
+        type[index] = currColor;
+        count[index++] = currCnt;
+        type[index] = -1;
+        count[index++] = -1;
+
+        // printf("%d %d\n", i, this->evalOneRow(type, count, aiColor));
+        score += this->evalOneRow(type, count, aiColor);
+    }
+    printf("root score: %d\n", score);
+}
+
+int 
+Mini::evalAccum1(short** board, Move mov, short aiColor)
+{
+    short movx = mov.x, movy = mov.y;
+    printf("%d %d %d %d\n", mov.x, mov.y, movx, movy);
+    short currColor, currCnt = 1, index = 0;
+    short type[BOARDSIZE], count[BOARDSIZE];
+    int score = 0, scoreBefore = 0;
+    memset(type, -1, sizeof(short) * BOARDSIZE);
+    memset(count, -1, sizeof(short) * BOARDSIZE);
+    for(int looper = 0; looper < 2; looper++){
+        scoreBefore = score;
+        //horizontal
+        currColor = board[movy][0];
+        for(int j = 1; j < BOARDSIZE; j++){
+            if(board[movy][j] == currColor) currCnt++;
+            else{
+                type[index] = currColor;
+                count[index++] = currCnt;
+                currColor = board[movy][j];
+                currCnt = 1;
+            }
+        }
+        type[index] = currColor;
+        count[index++] = currCnt;
+        type[index] = -1;
+        count[index++] = -1;
+        score += this->evalOneRow(type, count, aiColor);
+
+        //vertical
+        index = 0; currCnt = 1;   
+        currColor = board[0][movx];
+        for(int i = 1; i < BOARDSIZE; i++){
+            if(board[i][movx] == currColor) currCnt++;
+            else{
+                type[index] = currColor;
+                count[index++] = currCnt;
+                currColor = board[i][movx];
+                currCnt = 1;
+            }
+        }
+        type[index] = currColor;
+        count[index++] = currCnt;
+        type[index] = -1;
+        count[index++] = -1;
+        score += this->evalOneRow(type, count, aiColor);
+
+        //top left to bot right
+        int i , j;
+        index = 0; currCnt = 1;      
+        if(movx > movy) {i = 0; j = movx - movy;}
+        else {j = 0; i = movy - movx;}
+
+        currColor = board[i][j];
+        for(i++, j++; i < BOARDSIZE && j < BOARDSIZE; i++, j++){
+            if(board[i][j] == currColor) currCnt++;
+            else{
+                type[index] = currColor;
+                count[index++] = currCnt;
+                currColor = board[i][j];
+                currCnt = 1;
+            }
+        }
+        type[index] = currColor;
+        count[index++] = currCnt;
+        type[index] = -1;
+        count[index++] = -1;
+        score += this->evalOneRow(type, count, aiColor);
+
+        //bot left to top right
+        index = 0; currCnt = 1;
+        if(movx + movy < 18) {i = movx + movy; j = 0;}
+        else {i = 18; j = movx + movy - 18;}
+
+        currColor = board[i][j];
+        for(i--, j++; i > -1 && j < BOARDSIZE; i--, j++){
+            if(board[i][j] == currColor) currCnt++;
+            else{
+                type[index] = currColor;
+                count[index++] = currCnt;
+                currColor = board[i][j];
+                currCnt = 1;
+            }
+        }
+        type[index] = currColor;
+        count[index++] = currCnt;
+        type[index] = -1;
+        count[index++] = -1;
+        score += this->evalOneRow(type, count, aiColor);
+
+printf("%d %d %d %d\n", mov.x, mov.y, movx, movy);
+        board[movy][movx] = aiColor;
+    }
+    printf("score before: %d, score after: %d\n", scoreBefore, score);
+}
+
+
+/*
 int
 Mini::evalAccum1(short** board, Move mov, short aiColor)
 {
@@ -431,7 +732,6 @@ Mini::evalAccum1(short** board, Move mov, short aiColor)
             if(firstGap) stoneCenter++;
             else if(secondGap) stoneRight++;
             allCount++;
-            // if(gapCnt > 1) rightBlocked = false;
             gapCnt = 0;
         }
         else if(board[mov.y][i] == EMPTY){
@@ -440,7 +740,15 @@ Mini::evalAccum1(short** board, Move mov, short aiColor)
             allCount++;
             gapCnt++;
         } 
-        else break;
+        else{
+            if(board[mov.y][i] == OBSTACLE) ;
+            else{
+                if(stoneRight == 0){
+                    printf("oppo is blocked\n");
+                }
+            }
+            break;
+        }
         if(gapCnt > 1) rightBlocked = false;
     }
     firstGap = true; secondGap = true; gapCnt = 0;
@@ -449,7 +757,6 @@ Mini::evalAccum1(short** board, Move mov, short aiColor)
             if(firstGap) stoneCenter++;
             else if(secondGap) stoneLeft++;
             allCount++;
-            // if(gapCnt > 1) leftBlocked = false;
             gapCnt = 0;
         }
         else if(board[mov.y][i] == EMPTY){
@@ -465,18 +772,18 @@ Mini::evalAccum1(short** board, Move mov, short aiColor)
     printf("left: %d, center: %d, right, %d, all %d\n", stoneLeft, stoneCenter, stoneRight, allCount);
 
     if(allCount < 6) printf("dead stones\n");
-    else if(stoneRight == 0 || stoneLeft == 0) {
-        printf("%d stones\n", stoneCenter + stoneRight + stoneLeft);
-        if(leftBlocked) printf("left blocked\n");
-        if(rightBlocked) printf("right blocked\n");
+    else if(stoneRight == 0 || stoneLeft == 0) {  
+        if(leftBlocked || rightBlocked) printf("connected and blocked: %d\n", scoreArr[(stoneCenter + stoneRight + stoneLeft)*2-1]);
+        else printf("connected: %d\n", scoreArr[(stoneCenter + stoneRight + stoneLeft)*2]);
     }
     else {
-        if(leftBlocked) printf("%d at left blocked\n", stoneCenter + stoneLeft);
-        else printf("%d at left unblocked\n", stoneCenter + stoneLeft);
-        if(rightBlocked) printf("%d at right blocked\n", stoneCenter + stoneRight);
-        else printf("%d at right unblocked\n", stoneCenter + stoneLeft);
+        if(leftBlocked) printf("left and blocked: %d\n", scoreArr[(stoneCenter + stoneLeft)*2 -1]);
+        else printf("left: %d\n", scoreArr[(stoneCenter + stoneLeft)*2]);
+        if(rightBlocked) printf("right and blocked: %d\n", scoreArr[(stoneCenter + stoneRight)*2 -1]);
+        else printf("right: %d\n", scoreArr[(stoneCenter + stoneRight)*2]);
     }
 }
+*/
 
 int 
 Mini::chkRelation(Move mov1, Move mov2)
