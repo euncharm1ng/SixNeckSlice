@@ -492,7 +492,10 @@ Mini::evalOneRow(short type[BOARDSIZE], short count[BOARDSIZE])
                 tempLooper++;
                 if(type[tempLooper] == EMPTY){
                     gapCnt += count[tempLooper];
-                    if(gapCnt < 3) continue;
+                    if(gapCnt < 3){ 
+                        blockedL = true;
+                        continue;
+                    }
                     else if(count[tempLooper] > 1) ;
                     else if(type[tempLooper + 1] != currColor) 
                         blockedR = true;
@@ -684,6 +687,7 @@ Mini::evalAccum1(short board[][BOARDSIZE], Move mov, short inputStone)
     memset(count, -1, sizeof(short) * BOARDSIZE);
     for(int looper = 0; looper < 2; looper++){
         scoreBefore = score;
+        score = 0;
         //horizontal
         index = 0; currCnt = 1; 
         currColor = board[movy][0];

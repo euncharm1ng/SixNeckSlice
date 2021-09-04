@@ -205,6 +205,7 @@ runGUI()
     }while(aiPlays() == 0);
     printBoard();
     puts("end of game");
+	system("pause");
 }
 
 void*
