@@ -30,10 +30,9 @@ typedef Move* pMove;
 
 typedef struct Node {
     short color, moveSize; //the color to place to the board that yet not placed
-    int n, accumulate, value;
-    float mean, t;
+    int value;
     vector<Node*> *children;
-    Node* parent, *prevSel;
+    Node* parent;
     pMove movesLog;
 } Node;
 typedef Node* pNode;
@@ -45,39 +44,43 @@ void* freeAll (void* inputNode);
 void freeNode(pNode paraNode);
 
 class Mini{
+    void expansion(pNode currnode);
+
+    void findMoves(pNode currNode, vector<Move>& oneGridAway, vector<Move>& availMoves, short board[][BOARDSIZE]);
+    
+    void findMovesOneGrid(short board[][BOARDSIZE], vector<Move>& moveVec, int tagToAvoid);
+    
+    void expandChild(pNode currNode);
+
+    pNode select(pNode root);
+    
+    bool chkPossible(short** board, Move mov1);
+
     public:
         short** board;
         pNode root;
         short aiColor;
         
         Mini();
+
         Mini(short** paraBoard, short paraAiColor);
 
         pNode runGame(Move userMov1, Move userMov2);
-        void expansion(pNode currnode);
-
+        
         void setRoot(short paraAiColor);
-        void findMoves(pNode currNode, vector<Move>& oneGridAway, vector<Move>& availMoves, short board[][BOARDSIZE]);
-        void findMovesOneGrid(short board[][BOARDSIZE], vector<Move>& moveVec, int tagToAvoid);
+        
+        int evalRoot(short** board);
 
-        void evalRoot(short** board, short aiColor);
-        int evalOneRow(short* type, short* count, short aiColor);
+        int evalOneRow(short* type, short* count);
 
         /* evaluate the node's board with accumulated val*/
-        int evalAccum1(short** board, Move mov, short color);
-        
-        /* decide what moves to make */
-        void chooseNode();
-
+        int evalAccum1(short board[][BOARDSIZE], Move mov, short inputStone);
 
         /*
         * checks the board according to the mov1 and mov2, return 1 or 2 if 
         * the user with the color wins, else return 0 for no winner found.
         */
         int chkVic(short** board,Move mov1, Move mov2);
-        pNode returnMov();
-        bool chkPossible(short** board, Move mov1);
-        int chkRelation(Move mov1, Move mov2);
 };
 
 

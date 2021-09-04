@@ -28,27 +28,37 @@ todo:
 #include <random>
 #include <chrono>
 
-#define ROLLWINVAL 1
-#define ROLLLOSEVAL 1
-#define UCBMULT 3
+#define MY_F6 9999
+#define MY_H6 9999
+#define MY_F5 15
+#define MY_H5 10
+#define MY_F4 20
+#define MY_H4 11
+#define MY_F3 10
+#define MY_H3 5
+#define MY_F2 6
+#define MY_H2 4
+#define MY_F1 3
+#define MY_H1 1
 
-#define SIX 12
-#define FIVE 10
-#define FOUR 8
-#define THREE 6
-#define TWO 4
-#define ONE 2
-#define HALFSIX 11
-#define HALFFIVE 9
-#define HALFFOUR 7
-#define HALFTHREE 5
-#define HALFTWO 3
-#define HALFONE 1
+#define OP_F6 999
+#define OP_H6 999
+#define OP_F5 15
+#define OP_H5 10
+#define OP_F4 20
+#define OP_H4 11
+#define OP_F3 10
+#define OP_H3 5
+#define OP_F2 6
+#define OP_H2 4
+#define OP_F1 3
+#define OP_H1 1
 
 using namespace std;
 
 static int nodeCnt = 0;
-const int scoreArr[13] = {0, HALFONE, ONE, HALFTWO, TWO, HALFTHREE, THREE, HALFFOUR, FOUR, HALFFIVE, FIVE, HALFSIX, SIX};
+const int scoreMY[13] = {0, MY_H1, MY_F1, MY_H2, MY_F2, MY_H3, MY_F3, MY_H4, MY_F4, MY_H5, MY_F5, MY_H6, MY_F6};
+const int scoreOP[13] = {0, OP_H1, OP_F1, OP_H2, OP_F2, OP_H3, OP_F3, OP_H4, OP_F4, OP_H5, OP_F5, OP_H6, OP_F6};
 ofstream file;
 
 bool
@@ -62,31 +72,24 @@ pNode
 createNode(short paraColor) 
 {
     pNode newNode = (pNode)malloc(sizeof(Node));
-    newNode->t = 0;
-    newNode->n = 0;
     newNode->color = paraColor;
     newNode->moveSize = 0;
-    newNode->mean = 0;
     newNode->parent = NULL;
     newNode->movesLog = (pMove)malloc(1);
     newNode->children = new vector<pNode>;
-    newNode->prevSel = NULL;
     return newNode;
 }
 
 
 pNode 
-createNode(short paraColor, pNode paraParent, Move mov1, Move mov2, int toAccumulate)
+createNode(short paraColor, pNode paraParent, Move mov1, Move mov2, int accum)
 {
     nodeCnt++;
     pNode newNode = (pNode)malloc(sizeof(Node));
-    newNode->t = 0;
-    newNode->n = 0;
     newNode->color = paraColor;
     short k = paraParent->moveSize;
     newNode->moveSize = k + 2;
-    newNode->mean = 0;
-    newNode->accumulate = toAccumulate;
+    newNode->value = accum;
     newNode->parent = paraParent;
     newNode->movesLog = (pMove)malloc(sizeof(Move) * newNode->moveSize);
     for (short i = 0; i < k; i++) {
@@ -98,7 +101,6 @@ createNode(short paraColor, pNode paraParent, Move mov1, Move mov2, int toAccumu
     newNode->movesLog[k].x = mov2.x;
     newNode->movesLog[k].y = mov2.y;
     newNode->children = new vector<pNode>;
-    newNode->prevSel = NULL;
     return newNode;
 
 }
@@ -126,10 +128,10 @@ freeNode(pNode paraNode)
 }
 
 void 
-appendUCB(pNode root, short** board, pNode result){
+write(pNode root, short** board, pNode result){
     file.open("test.txt", std::ofstream::out | std::ofstream::app);
     if(file.is_open()){
-        file << "with the board being : \n";
+        file << "\nwith the board being : \n";
         file << "y\\x 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8\n";
         for(int i = 0; i < BOARDSIZE; i++){
             int printout = i% 10;
@@ -142,35 +144,24 @@ appendUCB(pNode root, short** board, pNode result){
             }
             file <<"\n";
         }
-        float parentN = log((float)root->n);
-
-        float chkre = result->mean + UCBMULT * (sqrt(parentN / (float)result->n));
-        file << "roll win: " << ROLLWINVAL << " roll lose: " << ROLLLOSEVAL << " ucb mult: " 
-                << UCBMULT <<" "<< root->children->size() << " " << root->n
-                << " selected: \n" << "move 1: " << result->movesLog[0].x << ", " << result->movesLog[0].y 
-                << "\tmove 2: " << result->movesLog[1].x << ", "<< result->movesLog[1].y 
-                << "\tucb: " << chkre << "\tn: " << result->n << "\tt: "<< result->t 
-                << "\tmean: " << result->mean << "\n\n";
-
-        
-        
+        file << "mov1x " << result->movesLog[0].x << " mov1y " << result->movesLog[0].y 
+                << "\tmov2x " << result->movesLog[1].x << " mov2y " << result->movesLog[1].y 
+                << "\tvalue " << result->value << "\n\n";
+       
         vector<pNode> &iter = *(root->children);
         for (pNode child : iter) {
-            float chk = child->mean + UCBMULT * (sqrt(parentN / (float)child->n));
-            file << "move 1: " << child->movesLog[0].x << ", " << child->movesLog[0].y 
-                << "\tmove 2: " << child->movesLog[1].x << ", "<< child->movesLog[1].y 
-                << "\tucb: " << chk << "\tn: " << child->n << "\tt: "<< child->t 
-                << "\tmean: " << child->mean << "\n";
+            file << "mov1x " << child->movesLog[0].x << " mov1y " << child->movesLog[0].y 
+                << "\tmov2x " << child->movesLog[1].x << " mov2y " << child->movesLog[1].y 
+                << "\tvalue " << child->value << "\n";
         }
-
     }
     file.close();
 }
 
-
 /*---------- class minimax ----------*/
 
 Mini::Mini(){}
+
 Mini::Mini(short** paraBoard, short paraAiColor) 
 {
     this->aiColor = paraAiColor;
@@ -192,52 +183,59 @@ Mini::runGame(Move userMov1, Move userMov2)
     float time = 0;
     pNode treeRoot = this->root;
 
+    puts("y\\x 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8");
+    for (int i = 0; i < 19; i++) {
+        printf("  %d ", i%10);
+        for (int j = 0; j < 19; j++) {
+            if (this->board[i][j] == BLACK) printf(CYAN "o " NORM);
+            else if (this->board[i][j] == WHITE) printf("o ");
+            else if (this->board[i][j] == OBSTACLE) printf(RED "o " NORM);
+            else printf(YELLOW "+ " NORM);
+        }
+        printf("\n");
+    }
+
+    treeRoot->value = this->evalRoot(this->board);
+    printf("tree root val: %d\n", treeRoot->value);
     this->expansion(treeRoot);
     printf("end of 1st expansion with size: %lum nodecnt: %d\n", treeRoot->children->size(), nodeCnt);
     
     vector<pNode> &iter = *(treeRoot->children);
     for (pNode child : iter) {
-        this->expansion(child);
+        this->expandChild(child);
+        // printf("%d, %d and %d, %d scored: %d\n", child->movesLog[0].x, child->movesLog[0].y, child->movesLog[1].x, child->movesLog[1].y, child->value);
     }
     printf("end of 2st expansion nodecnt: %d\n", nodeCnt);
     
     time_t endTime = clock();
     time = (endTime - startTime) / double(CLOCKS_PER_SEC);
     printf("%f sec\n\n", time);
-    nodeCnt= 0;
-    // return NULL; //FIXME
-    return treeRoot->children->at(0);
+    nodeCnt = 0;
+    pNode result = select(treeRoot);
+    write(treeRoot, this->board, result);
+    return result;
 }// end of runGame()
 
-
-
-bool Mini::chkPossible(short** board, Move mov1) {
-    //TODO: add cases to handle red stone.
-    short i = mov1.y, j = mov1.x;
-
-    //check vertical
-    if (j < 16 && board[i][j+2] != EMPTY && board[i][j+2] == board[i][j+3]) return true;
-    else if (j > 2 && board[i][j-2] != EMPTY && board[i][j-2] == board[i][j-3]) return true;
-
-    //check horizion
-    else if (i < 16 && board[i+2][j] != EMPTY && board[i+2][j] == board[i+3][j]) return true;
-    else if (i > 2 && board[i-2][j] != EMPTY && board[i-2][j] == board[i-3][j]) return true;
-
-    //check right-up diagonal
-    else if (i < 16 && j > 2 && board[i+2][j-2] != EMPTY && board[i+2][j-2] == board[i+3][j-3]) return true;
-    else if (i > 2 && j < 16 && board[i-2][j+2] != EMPTY && board[i-2][j+2] == board[i-3][j+3]) return true;
-
-    //check left-up diagonal
-    else if (i > 2 && j > 2 && board[i-2][j-2] != EMPTY && board[i-2][j-2] == board[i-3][j-3]) return true;
-    else if (i < 16 && j < 16 & board[i+2][j+2] != EMPTY && board[i+2][j+2] == board[i+3][j+3]) return true;
-    else return false;
+pNode
+Mini::select(pNode root)
+{
+    vector<pNode> &iter = *(root->children);
+    pNode toReturn = iter.at(0);
+    int max = iter.at(0)->value;
+    for (pNode child : iter) {
+        if(child->value > max){
+            toReturn = child;
+            max = child->value;
+        }
+    }
+    return toReturn;
 }
 
 void 
 Mini::expansion(pNode currNode)
 {
     short child_color = (currNode->color == BLACK) ? WHITE : BLACK;
-    int gridMoveSize, availMoveSize, twoGridAwaySize;
+    int gridMoveSize, availMoveSize, twoGridAwaySize, childScore1, childScore2;
     Move mov1, mov2;
     vector<Move> oneGridAway, twoGridAway;
     short board[BOARDSIZE][BOARDSIZE];
@@ -262,39 +260,112 @@ Mini::expansion(pNode currNode)
         }
     }
 
-    // puts("y\\x 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8");
-    // for (int i = 0; i < 19; i++) {
-    //     printf("  %d ", i%10);
-    //     for (int j = 0; j < 19; j++) {
-    //         if (board[i][j] == BLACK) printf(CYAN "o " NORM);
-    //         else if (board[i][j] == WHITE) printf(PURPLE "o " NORM);
-    //         else if (board[i][j] == OBSTACLE) printf(RED "o " NORM);
-    //         else if (board[i][j] == EMPTY) printf(YELLOW "+ " NORM);
-    //         else printf("%d ", board[i][j]);
-    //     }
-    //     printf("\n");
-    // }
+    gridMoveSize = oneGridAway.size();
+    twoGridAwaySize = twoGridAway.size();
+
+    pNode tempNode = NULL;
+    for (int i = 0; i < gridMoveSize; i++) {
+        mov1 = oneGridAway[i]; 
+        childScore1 = this->evalAccum1(board, mov1, this->aiColor);
+        for (int j = i + 1; j < gridMoveSize; j++) {
+            mov2 = oneGridAway[j];
+            childScore2 = this->evalAccum1(board, mov2, this->aiColor);
+            tempNode = createNode(child_color, currNode, mov1, mov2, currNode->value + childScore1 + childScore2);
+            currNode->children->push_back(tempNode);
+            board[mov2.y][mov2.x] = EMPTY;
+        }
+        for (int j = 0; j < twoGridAwaySize; j++) {
+            mov2 = twoGridAway[j];
+            childScore2 = this->evalAccum1(board, mov2, this->aiColor);
+            tempNode = createNode(child_color, currNode, mov1, mov2, currNode->value + childScore1 + childScore2);
+            currNode->children->push_back(tempNode);
+            board[mov2.y][mov2.x] = EMPTY;
+        }
+        board[mov1.y][mov1.x] = EMPTY;
+    }
+    currNode->children->shrink_to_fit();
+}// end of expansion()
+
+void 
+Mini::expandChild(pNode currNode)
+{
+    // printf("curr val: %d\n", currNode->value);
+    int gridMoveSize, availMoveSize, twoGridAwaySize, childScore1, childScore2, min = 99999;
+    Move mov1, mov2;
+    vector<Move> oneGridAway, twoGridAway;
+    short board[BOARDSIZE][BOARDSIZE];
+    short turn = this->aiColor, childrenColor = (currNode->color == BLACK)? WHITE: BLACK;
+
+
+    for (int i = 0; i < BOARDSIZE; i++) {
+        for (int j = 0; j < BOARDSIZE; j++)
+            board[i][j] = this->board[i][j];
+    }
+    int k = currNode->moveSize;
+    for (int i = 0; i < k; i += 2) {
+        board[currNode->movesLog[i].y][currNode->movesLog[i].x] = turn;
+        board[currNode->movesLog[i + 1].y][currNode->movesLog[i + 1].x] = turn;
+        turn = (turn == BLACK) ? WHITE : BLACK;
+    }
+
+    this->findMoves(currNode, oneGridAway, twoGridAway, board);
+
+    for(int i = 0; i < BOARDSIZE; i++){
+        for(int j = 0; j < BOARDSIZE; j++){
+            if(board[i][j] > OBSTACLE) board[i][j] = EMPTY;
+        }
+    }
 
     gridMoveSize = oneGridAway.size();
     twoGridAwaySize = twoGridAway.size();
 
     pNode tempNode = NULL;
     for (int i = 0; i < gridMoveSize; i++) {
-        mov1 = oneGridAway[i]; //calc first move first then, check the relationship btw mov1 and mov2, if no relationship just accumulate, if there is relationship, deduct mov1's points and accumulate mov2.
+        mov1 = oneGridAway[i]; 
+        childScore1 = this->evalAccum1(board, mov1, currNode->color);
         for (int j = i + 1; j < gridMoveSize; j++) {
             mov2 = oneGridAway[j];
-            tempNode = createNode(child_color, currNode, mov1, mov2, 0);
-            currNode->children->push_back(tempNode);
+            childScore2 = this->evalAccum1(board, mov2, currNode->color);
+            if(min > currNode->value + childScore1 + childScore2) 
+                min = currNode->value + childScore1 + childScore2;
+            board[mov2.y][mov2.x] = EMPTY;
         }
         for (int j = 0; j < twoGridAwaySize; j++) {
             mov2 = twoGridAway[j];
-            tempNode = createNode(child_color, currNode, mov1, mov2, 0);
-            currNode->children->push_back(tempNode);
+            childScore2 = this->evalAccum1(board, mov2, currNode->color);
+            if(min > currNode->value + childScore1 + childScore2) 
+                min = currNode->value + childScore1 + childScore2;
+            board[mov2.y][mov2.x] = EMPTY;
         }
+        board[mov1.y][mov1.x] = EMPTY;
     }
-    currNode->children->shrink_to_fit();
-}// end of expansion()
+    currNode->value = min;
+    // printf("min val: %d\n", currNode->value);
+}
 
+bool 
+Mini::chkPossible(short** board, Move mov1) 
+{
+    //TODO: add cases to handle red stone.
+    short i = mov1.y, j = mov1.x;
+
+    //check vertical
+    if (j < 16 && board[i][j+2] != EMPTY && board[i][j+2] == board[i][j+3]) return true;
+    else if (j > 2 && board[i][j-2] != EMPTY && board[i][j-2] == board[i][j-3]) return true;
+
+    //check horizion
+    else if (i < 16 && board[i+2][j] != EMPTY && board[i+2][j] == board[i+3][j]) return true;
+    else if (i > 2 && board[i-2][j] != EMPTY && board[i-2][j] == board[i-3][j]) return true;
+
+    //check right-up diagonal
+    else if (i < 16 && j > 2 && board[i+2][j-2] != EMPTY && board[i+2][j-2] == board[i+3][j-3]) return true;
+    else if (i > 2 && j < 16 && board[i-2][j+2] != EMPTY && board[i-2][j+2] == board[i-3][j+3]) return true;
+
+    //check left-up diagonal
+    else if (i > 2 && j > 2 && board[i-2][j-2] != EMPTY && board[i-2][j-2] == board[i-3][j-3]) return true;
+    else if (i < 16 && j < 16 & board[i+2][j+2] != EMPTY && board[i+2][j+2] == board[i+3][j+3]) return true;
+    else return false;
+}
 
 void 
 Mini::findMovesOneGrid(short board[][BOARDSIZE], vector<Move>& moveVec, int tagToAvoid) 
@@ -403,33 +474,10 @@ Mini::chkVic(short** board, Move mov1, Move mov2)
     return 0;
 }// end of chkVic()
 
-pNode
-Mini::returnMov() 
-{
-    float max = -1000000, value = 0;
-    pNode toReturn = NULL, rootNode = this->root;
-    vector<pNode>& iter = *(rootNode->children);
-    for (pNode child : iter) {
-        value = child->mean;
-        if (max < value) {
-            max = value;
-            toReturn = child;
-        }
-    }
-    return toReturn;
-}
-
-
 int
-Mini::evalOneRow(short type[BOARDSIZE], short count[BOARDSIZE], short aiColor)
+Mini::evalOneRow(short type[BOARDSIZE], short count[BOARDSIZE])
 {
-    // for(int i =0; i < BOARDSIZE; i++){
-    //     printf("%2d ", type[i]);
-    // }
-    // puts("");
-    // for(int i =0; i < BOARDSIZE; i++)
-    //     printf("%2d ", count[i]);
-    // puts("");
+    short aiColor = this->aiColor;
         //TODO: gotta hadle red stone
     short currColor, currCnt = 1, gapCnt = 0, frontGap = 0;
     int looper = 0, score = 0;
@@ -468,9 +516,9 @@ Mini::evalOneRow(short type[BOARDSIZE], short count[BOARDSIZE], short aiColor)
                 currCnt *= 2;
                 if(blockedL || blockedR) currCnt--;
                 if(currColor == aiColor) 
-                    score += scoreArr[currCnt];
+                    score += scoreMY[currCnt];
                 else   
-                    score -= scoreArr[currCnt];
+                    score -= scoreOP[currCnt];
             }
             currCnt = 0; gapCnt = 0;
         }
@@ -482,8 +530,8 @@ Mini::evalOneRow(short type[BOARDSIZE], short count[BOARDSIZE], short aiColor)
     return score;
 }
 
-void 
-Mini::evalRoot(short** board, short aiColor)
+int 
+Mini::evalRoot(short** board)
 {
     short currColor, currCnt = 1, index = 0;
     short type[BOARDSIZE], count[BOARDSIZE];
@@ -507,8 +555,8 @@ Mini::evalRoot(short** board, short aiColor)
         count[index++] = currCnt;
         type[index] = -1;
         count[index++] = -1;
-        score += this->evalOneRow(type, count, aiColor);
-        // printf("%d %d\n", i, this->evalOneRow(type, count, aiColor));
+        score += this->evalOneRow(type, count);
+        // printf("%d %d\n", i, this->evalOneRow(type, count));
     }
 
     for(int j = 0; j < BOARDSIZE; j++){ //vertical
@@ -528,8 +576,8 @@ Mini::evalRoot(short** board, short aiColor)
         type[index] = -1;
         count[index++] = -1;
 
-        score += this->evalOneRow(type, count, aiColor);
-        // printf("%d %d\n", j, this->evalOneRow(type, count, aiColor));
+        score += this->evalOneRow(type, count);
+        // printf("%d %d\n", j, this->evalOneRow(type, count));
     }
 
     for(int i = 0; i < 14; i++){ //top left to bot right, left top down
@@ -550,8 +598,8 @@ Mini::evalRoot(short** board, short aiColor)
         type[index] = -1;
         count[index++] = -1;
 
-        // printf("%d %d\n", i, this->evalOneRow(type, count, aiColor));
-        score += this->evalOneRow(type, count, aiColor);
+        // printf("%d %d\n", i, this->evalOneRow(type, count));
+        score += this->evalOneRow(type, count);
     }
     
 
@@ -573,8 +621,8 @@ Mini::evalRoot(short** board, short aiColor)
         type[index] = -1;
         count[index++] = -1;
 
-        // printf("%d %d\n", i, this->evalOneRow(type, count, aiColor));
-        score += this->evalOneRow(type, count, aiColor);
+        // printf("%d %d\n", i, this->evalOneRow(type, count));
+        score += this->evalOneRow(type, count);
     }
 
     for(int i = 18; i > 4; i--){ // bot left to top right, left bot to top
@@ -595,8 +643,8 @@ Mini::evalRoot(short** board, short aiColor)
         type[index] = -1;
         count[index++] = -1;
 
-        // printf("%d %d\n", i, this->evalOneRow(type, count, aiColor));
-        score += this->evalOneRow(type, count, aiColor);
+        // printf("%d %d\n", i, this->evalOneRow(type, count));
+        score += this->evalOneRow(type, count);
     }
 
     for(int i =1; i < 14; i++){ // bot left to top right, bot left to right
@@ -617,17 +665,18 @@ Mini::evalRoot(short** board, short aiColor)
         type[index] = -1;
         count[index++] = -1;
 
-        // printf("%d %d\n", i, this->evalOneRow(type, count, aiColor));
-        score += this->evalOneRow(type, count, aiColor);
+        // printf("%d %d\n", i, this->evalOneRow(type, count));
+        score += this->evalOneRow(type, count);
     }
-    printf("root score: %d\n", score);
+    printf("-=-=root score: %d\n", score);
+    return score;
+    
 }
 
 int 
-Mini::evalAccum1(short** board, Move mov, short aiColor)
+Mini::evalAccum1(short board[][BOARDSIZE], Move mov, short inputStone)
 {
     short movx = mov.x, movy = mov.y;
-    printf("%d %d %d %d\n", mov.x, mov.y, movx, movy);
     short currColor, currCnt = 1, index = 0;
     short type[BOARDSIZE], count[BOARDSIZE];
     int score = 0, scoreBefore = 0;
@@ -636,6 +685,7 @@ Mini::evalAccum1(short** board, Move mov, short aiColor)
     for(int looper = 0; looper < 2; looper++){
         scoreBefore = score;
         //horizontal
+        index = 0; currCnt = 1; 
         currColor = board[movy][0];
         for(int j = 1; j < BOARDSIZE; j++){
             if(board[movy][j] == currColor) currCnt++;
@@ -650,7 +700,7 @@ Mini::evalAccum1(short** board, Move mov, short aiColor)
         count[index++] = currCnt;
         type[index] = -1;
         count[index++] = -1;
-        score += this->evalOneRow(type, count, aiColor);
+        score += this->evalOneRow(type, count);
 
         //vertical
         index = 0; currCnt = 1;   
@@ -668,7 +718,7 @@ Mini::evalAccum1(short** board, Move mov, short aiColor)
         count[index++] = currCnt;
         type[index] = -1;
         count[index++] = -1;
-        score += this->evalOneRow(type, count, aiColor);
+        score += this->evalOneRow(type, count);
 
         //top left to bot right
         int i , j;
@@ -690,7 +740,7 @@ Mini::evalAccum1(short** board, Move mov, short aiColor)
         count[index++] = currCnt;
         type[index] = -1;
         count[index++] = -1;
-        score += this->evalOneRow(type, count, aiColor);
+        score += this->evalOneRow(type, count);
 
         //bot left to top right
         index = 0; currCnt = 1;
@@ -711,86 +761,11 @@ Mini::evalAccum1(short** board, Move mov, short aiColor)
         count[index++] = currCnt;
         type[index] = -1;
         count[index++] = -1;
-        score += this->evalOneRow(type, count, aiColor);
+        score += this->evalOneRow(type, count);
 
-printf("%d %d %d %d\n", mov.x, mov.y, movx, movy);
-        board[movy][movx] = aiColor;
+        board[movy][movx] = inputStone;
     }
-    printf("score before: %d, score after: %d\n", scoreBefore, score);
-}
-
-
-/*
-int
-Mini::evalAccum1(short** board, Move mov, short aiColor)
-{
-    //TODO: check if a side is blocked
-    int stoneRight = 0, stoneLeft = 0, stoneCenter = 0, allCount = 1, gapCnt = 0;
-    bool firstGap = true, secondGap = true, leftBlocked = true, rightBlocked = true;
-    for(int i = mov.x + 1; i < 19; i++){
-        if(board[mov.y][i] == aiColor){
-            if(firstGap) stoneCenter++;
-            else if(secondGap) stoneRight++;
-            allCount++;
-            gapCnt = 0;
-        }
-        else if(board[mov.y][i] == EMPTY){
-            if(firstGap) firstGap = false;
-            else secondGap = false;
-            allCount++;
-            gapCnt++;
-        } 
-        else{
-            if(board[mov.y][i] == OBSTACLE) ;
-            else{
-                if(stoneRight == 0){
-                    printf("oppo is blocked\n");
-                }
-            }
-            break;
-        }
-        if(gapCnt > 1) rightBlocked = false;
-    }
-    firstGap = true; secondGap = true; gapCnt = 0;
-    for(int i = mov.x -1; i > -1; i--){
-        if(board[mov.y][i] == aiColor){
-            if(firstGap) stoneCenter++;
-            else if(secondGap) stoneLeft++;
-            allCount++;
-            gapCnt = 0;
-        }
-        else if(board[mov.y][i] == EMPTY){
-            if(firstGap) firstGap = false;
-            else secondGap = false;
-            allCount++;
-            gapCnt++;
-        }
-        else break;
-        if(gapCnt > 1) leftBlocked = false;
-    }
-    
-    printf("left: %d, center: %d, right, %d, all %d\n", stoneLeft, stoneCenter, stoneRight, allCount);
-
-    if(allCount < 6) printf("dead stones\n");
-    else if(stoneRight == 0 || stoneLeft == 0) {  
-        if(leftBlocked || rightBlocked) printf("connected and blocked: %d\n", scoreArr[(stoneCenter + stoneRight + stoneLeft)*2-1]);
-        else printf("connected: %d\n", scoreArr[(stoneCenter + stoneRight + stoneLeft)*2]);
-    }
-    else {
-        if(leftBlocked) printf("left and blocked: %d\n", scoreArr[(stoneCenter + stoneLeft)*2 -1]);
-        else printf("left: %d\n", scoreArr[(stoneCenter + stoneLeft)*2]);
-        if(rightBlocked) printf("right and blocked: %d\n", scoreArr[(stoneCenter + stoneRight)*2 -1]);
-        else printf("right: %d\n", scoreArr[(stoneCenter + stoneRight)*2]);
-    }
-}
-*/
-
-int 
-Mini::chkRelation(Move mov1, Move mov2)
-{
-    if(mov1.x == mov2.x) return 1; // horizontal
-    else if(mov1.y == mov2.y) return 2; // vertical
-    else if(mov1.x - mov2.x == mov1.y - mov2.y) return 3; // top left to bot right
-    else if(mov1.x - mov2.x == 0 - mov1.y - mov2.y) return 4; // top right to bot left
-    else return 0;
+    // printf("score before: %d, score after: %d\n", scoreBefore, score);
+    score -= scoreBefore;
+    return score;
 }

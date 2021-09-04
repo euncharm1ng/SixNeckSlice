@@ -10,8 +10,14 @@
 using namespace std;
 
 int main(){
-    // runGUI();
+    runGUI();
+
+/*    
     Mini min = Mini();
+    short type[BOARDSIZE] = {0, 1, 0, -1}, count[BOARDSIZE] = {7, 4, 8, -1};
+    min.evalOneRow(type, count);
+    
+    /*
     short **board;
     board = (short**)malloc(sizeof(short*) * BOARDSIZE);
     for(int i =0; i < BOARDSIZE; i++){
@@ -61,6 +67,9 @@ int main(){
     board[14][8] = 1;
 
 
+    min.evalRoot(board, 2);
+    printf("-+%d\n", min.evalAccum1(board, {0, 12}, 2));
+    
     puts("y\\x 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8");
     for (int i = 0; i < 19; i++) {
         printf("  %d ", i%10);
@@ -72,20 +81,8 @@ int main(){
         }
         printf("\n");
     }
-
-    min.evalRoot(board, 2);
-    min.evalAccum1(board, {0, 12}, 2);
-        puts("y\\x 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8");
-    for (int i = 0; i < 19; i++) {
-        printf("  %d ", i%10);
-        for (int j = 0; j < 19; j++) {
-            if (board[i][j] == BLACK) printf(CYAN "o " NORM);
-            else if (board[i][j] == WHITE) printf("o ");
-            else if (board[i][j] == OBSTACLE) printf(RED "o " NORM);
-            else printf(YELLOW "+ " NORM);
-        }
-        printf("\n");
-    }
+    */
+    
 
     // short **board = (short**)malloc(sizeof(short*)*BOARDSIZE);
     // for (int i =0; i< BOARDSIZE; i++){
