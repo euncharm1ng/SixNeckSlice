@@ -29,27 +29,30 @@ todo:
 #include <chrono>
 
 #define MY_F6 9999
-#define MY_H6 9999
-#define MY_F5 15
-#define MY_H5 10
-#define MY_F4 20
-#define MY_H4 11
+#define MY_H6 5000
+
+#define MY_F5 10
+#define MY_H5 5
+
+#define MY_F4 50
+#define MY_H4 25
 #define MY_F3 10
 #define MY_H3 5
-#define MY_F2 6
-#define MY_H2 4
-#define MY_F1 3
+#define MY_F2 20
+#define MY_H2 10
+#define MY_F1 5
 #define MY_H1 1
 
 #define OP_F6 999
-#define OP_H6 999
-#define OP_F5 15
-#define OP_H5 10
-#define OP_F4 20
-#define OP_H4 11
-#define OP_F3 10
-#define OP_H3 5
-#define OP_F2 6
+#define OP_H6 500
+#define OP_F5 200
+#define OP_H5 100
+#define OP_F4 200
+#define OP_H4 100
+
+#define OP_F3 13
+#define OP_H3 7
+#define OP_F2 10
 #define OP_H2 4
 #define OP_F1 3
 #define OP_H1 1
@@ -183,22 +186,10 @@ Mini::runGame(Move userMov1, Move userMov2)
     float time = 0;
     pNode treeRoot = this->root;
 
-    puts("y\\x 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8");
-    for (int i = 0; i < 19; i++) {
-        printf("  %d ", i%10);
-        for (int j = 0; j < 19; j++) {
-            if (this->board[i][j] == BLACK) printf(CYAN "o " NORM);
-            else if (this->board[i][j] == WHITE) printf("o ");
-            else if (this->board[i][j] == OBSTACLE) printf(RED "o " NORM);
-            else printf(YELLOW "+ " NORM);
-        }
-        printf("\n");
-    }
-
     treeRoot->value = this->evalRoot(this->board);
     printf("tree root val: %d\n", treeRoot->value);
     this->expansion(treeRoot);
-    printf("end of 1st expansion with size: %lum nodecnt: %d\n", treeRoot->children->size(), nodeCnt);
+    printf("end of 1st expansion, nodecnt: %d\n", nodeCnt);
     
     vector<pNode> &iter = *(treeRoot->children);
     for (pNode child : iter) {
@@ -671,7 +662,6 @@ Mini::evalRoot(short** board)
         // printf("%d %d\n", i, this->evalOneRow(type, count));
         score += this->evalOneRow(type, count);
     }
-    printf("-=-=root score: %d\n", score);
     return score;
     
 }
