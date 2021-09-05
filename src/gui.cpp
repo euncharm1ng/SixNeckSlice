@@ -1,4 +1,5 @@
-#include "mcts.h"
+// #include "mcts.h"
+#include "minimax.h"
 #include <SFML/Graphics.hpp>
 #include <cstdio>
 #include <iostream>
@@ -15,13 +16,50 @@ int cell_size = 30;
 int freeCount;
 short** guiBoard;
 short aiColor, userColor;
-Mcts m;
+// Mcts m;
+Mini m;
 pthread_t freer, GUIRunner;
+<<<<<<< HEAD
 pthread_mutex_t mlock = PTHREAD_MUTEX_INITIALIZER;
+=======
+pthread_mutex_t mylock = PTHREAD_MUTEX_INITIALIZER;
+>>>>>>> 70689978b6741010287f45998f2789780c8bd55f
 pthread_cond_t wakegui = PTHREAD_COND_INITIALIZER;
 pthread_cond_t wakeai = PTHREAD_COND_INITIALIZER;
-
+int receiveFromGui = 0;
 Move mov1, mov2;
+
+
+int 
+try_wait()
+{
+	int toReturn = 0;
+	pthread_mutex_lock(&mylock);
+	if(receiveFromGui > 0){
+		receiveFromGui--;
+		toReturn = 1;
+	}
+	pthread_mutex_unlock(&mylock);
+	return toReturn;
+}
+
+void
+post()
+{
+	pthread_mutex_lock(&mylock);
+	receiveFromGui++;
+	pthread_cond_wait(&wakeai, &mylock);
+	pthread_mutex_unlock(&mylock);
+	
+}
+
+void 
+draw()
+{
+	pthread_mutex_lock(&mylock);
+	receiveFromGui++;
+	pthread_mutex_unlock(&mylock);
+}
 
 void 
 initGUI ()
@@ -40,7 +78,8 @@ initGUI ()
     printf("Then AiColor is %hd\n", aiColor);
     setRedStone();
 
-    m = Mcts(guiBoard, aiColor);
+    // m = Mcts(guiBoard, aiColor);
+	m = Mini(guiBoard, aiColor);
 	mov1.x = mov1.y = mov2.x = mov2.y = 0;
 }
 
@@ -109,7 +148,7 @@ aiPlays()
     placeStone(result->movesLog[0], aiColor);
     placeStone(result->movesLog[1], aiColor);
     int chkWin = m.chkVic(guiBoard, result->movesLog[0], result->movesLog[1]);
-
+	printf("x1: %2d y1: %2d\nx2: %2d y2: %2d\n\n", result->movesLog[0].x, result->movesLog[0].y, result->movesLog[1].x, result->movesLog[1].y);
     pthread_create(&freer, NULL, freeAll, m.root);
 	pthread_detach(freer);
     m.setRoot(aiColor);
@@ -148,15 +187,24 @@ receiveUserInput ()
 void 
 GUIuserPlayFirst()
 {
+<<<<<<< HEAD
 	pthread_mutex_lock(&mlock);
 	pthread_cond_signal(&wakegui);
 	pthread_cond_wait(&wakeai, &mlock);
 	pthread_mutex_unlock(&mlock);
+=======
+	// pthread_mutex_lock(&lock);
+	// pthread_cond_signal(&wakegui);
+	// pthread_cond_wait(&wakeai, &lock);
+	// pthread_mutex_unlock(&lock);
+	post();
+>>>>>>> 70689978b6741010287f45998f2789780c8bd55f
 }
 
 int
 GUIreceiveUserInput()
 {
+<<<<<<< HEAD
 	pthread_mutex_lock(&mlock);
 	pthread_cond_signal(&wakegui);
 	pthread_cond_wait(&wakeai, &mlock);
@@ -165,6 +213,17 @@ GUIreceiveUserInput()
 	pthread_cond_wait(&wakeai, &mlock);
 	
 	pthread_mutex_unlock(&mlock);
+=======
+	// pthread_mutex_lock(&lock);
+	// pthread_cond_signal(&wakegui);
+	// pthread_cond_wait(&wakeai, &lock);
+
+	// pthread_cond_signal(&wakegui);
+	// pthread_cond_wait(&wakeai, &lock);
+	
+	// pthread_mutex_unlock(&lock);
+	post(); post();
+>>>>>>> 70689978b6741010287f45998f2789780c8bd55f
 
 	if (m.chkVic(guiBoard, mov1, mov2))
         return 1;
@@ -176,9 +235,10 @@ GUIreceiveUserInput()
 void 
 runGUI()
 {
-    initGUI();
-	
+	initGUI();
 	pthread_create(&GUIRunner, NULL, runDahunGUI, NULL);
+    
+	
     if(userColor == BLACK){
 		//GUIuserPlayFirst();
         userPlayFirst();
@@ -196,10 +256,18 @@ runGUI()
             break;
         }
     }while(aiPlays() == 0);
-    printBoard();
+    // printBoard();
     puts("end of game");
+	draw();
+	system("pause");
 }
+<<<<<<< HEAD
 /*
+=======
+
+
+
+>>>>>>> 70689978b6741010287f45998f2789780c8bd55f
 void*
 runDahunGUI(void*)
 {
@@ -282,7 +350,9 @@ runDahunGUI(void*)
 
 	draw_board();
 	window.display();
+
 	while(1){
+<<<<<<< HEAD
 		pthread_mutex_lock(&mlock);
 		pthread_cond_wait(&wakegui, &mlock);
 		
@@ -290,41 +360,64 @@ runDahunGUI(void*)
 		{
 			Event e;
 			if (window.pollEvent(e))
+=======
+		// pthread_mutex_lock(&lock);
+		// pthread_cond_wait(&wakegui, &lock);
+		if(try_wait()){
+			draw_stones();
+			while(window.isOpen())
+>>>>>>> 70689978b6741010287f45998f2789780c8bd55f
 			{
-				if (e.type == Event::Closed)
-					window.close();
-				if (e.type == Event::MouseButtonPressed)
+				Event e;
+				if (window.pollEvent(e))
 				{
-					int ix = e.mouseButton.x / cell_size;
-					int iy = e.mouseButton.y / cell_size;
-
-					if (e.mouseButton.button == Mouse::Left)
+					if (e.type == Event::Closed)
+						window.close();
+					if (e.type == Event::MouseButtonPressed)
 					{
-						if(toggleMov){
-							mov1.x = ix;
-							mov1.y = iy;
-							placeStone(mov1, userColor);
-							printf("here %d %d\n", iy, ix);
-							toggleMov--;
+						int ix = e.mouseButton.x / cell_size;
+						int iy = e.mouseButton.y / cell_size;
+
+						if (e.mouseButton.button == Mouse::Left)
+						{
+							if(toggleMov){
+								mov1.x = ix;
+								mov1.y = iy;
+								if(placeStone(mov1, userColor) == -1) continue;
+								printf("user input: %d %d\n", iy, ix);
+								toggleMov--;
+							}
+							else{
+								mov2.x = ix;
+								mov2.y = iy;
+								if(placeStone(mov2, userColor) == -1) continue;
+								printf("user input: %d %d\n", iy, ix);
+								toggleMov++;
+							}
 						}
-						else{
-							mov2.x = ix;
-							mov2.y = iy;
-							placeStone(mov2, userColor);
-							printf("here %d %d\n", iy, ix);
-							toggleMov++;
-						}
+						draw_stones();
+						break;
 					}
+<<<<<<< HEAD
 				
 					draw_stones();
 					break;
+=======
+>>>>>>> 70689978b6741010287f45998f2789780c8bd55f
 				}
+				draw_stones();
 			}
-			draw_stones();
+			pthread_cond_signal(&wakeai);
 		}
+<<<<<<< HEAD
 		puts("signaling ai");
 		pthread_cond_signal(&wakeai);
 		pthread_mutex_unlock(&mlock);
+=======
+		// puts("signaling ai");
+		// pthread_cond_signal(&wakeai);
+		// pthread_mutex_unlock(&lock);
+>>>>>>> 70689978b6741010287f45998f2789780c8bd55f
 	}
 }
 */

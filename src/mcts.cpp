@@ -5,7 +5,11 @@ refereced:
 */
 /*
 todo:
-    ucb, total value, n
+    change algorithm from mcts to minimax.
+        rollout, select, backprop will be disgarded
+        new function of evaluating board and choice maker will be added
+        evaluate: have to accumulate,ggvG based on how stones form the board. 
+            find cnt of attackable points or the urgency, can we attack or not?
 
 */
 
@@ -31,7 +35,7 @@ todo:
 #define TIMELIMIT 20
 
 #define ROLLWINVAL 1
-#define ROLLLOSEVAL 0.1
+#define ROLLLOSEVAL 1
 #define UCBMULT 3
 // #define ROLLWINVAL 10
 // #define ROLLLOSEVAL -20
@@ -181,6 +185,7 @@ pNode
 Mcts::runGame(Move userMov1, Move userMov2) 
 {
     time_t startTime = clock();
+    unsigned seed = chrono::system_clock::now().time_since_epoch().count();
     float time = 0;
     float value = 0;
     int i = 0, j = 0;
@@ -197,8 +202,9 @@ Mcts::runGame(Move userMov1, Move userMov2)
             // printf("%f \t", value);
             this->backprop(child, value);
         }
-        // this->expansion(child);
-        // random_shuffle(child->children->begin(), child->children->end()); // use shuffle
+        this->expansion(child);
+        shuffle(child->children->begin(), child->children->end(), default_random_engine(seed)); // use shuffle
+        // shuffle(availMoves.begin(), availMoves.end(), default_random_engine(seed));
     }
     // printf("end of 2nd expansion nodeCnt: %d\n", nodeCnt);
     // random_shuffle(treeRoot->children->begin(), treeRoot->children->end()); // use shuffle
@@ -286,13 +292,13 @@ Mcts::expansion(pNode currNode)
     int gridMoveSize = 0, availMoveSize = 0, twoGridAwaySize = 0;
     Move mov1, mov2;
     vector<Move> oneGridAway, availMoves, twoGridAway;
-    short** placeFirstMov = (short**)malloc(sizeof(short*) * BOARDSIZE);
-    for(int i =0; i< BOARDSIZE; i++){
-        placeFirstMov[i] = (short*)malloc(sizeof(short) * BOARDSIZE);
-        for(int j =0; j< BOARDSIZE; j++){
-            placeFirstMov[i][j] = this->board[i][j];
-        }
-    }
+    // short** placeFirstMov = (short**)malloc(sizeof(short*) * BOARDSIZE);
+    // for(int i =0; i< BOARDSIZE; i++){
+    //     placeFirstMov[i] = (short*)malloc(sizeof(short) * BOARDSIZE);
+    //     for(int j =0; j< BOARDSIZE; j++){
+    //         placeFirstMov[i][j] = this->board[i][j];
+    //     }
+    // }
 
     this->findMoves(currNode, oneGridAway, availMoves);
     
@@ -321,10 +327,10 @@ Mcts::expansion(pNode currNode)
     }
     currNode->children->shrink_to_fit();
     
-    for(int i =0; i< BOARDSIZE; i++){
-        free(placeFirstMov[i]);
-    }
-    free(placeFirstMov);
+    // for(int i =0; i< BOARDSIZE; i++){
+    //     free(placeFirstMov[i]);
+    // }
+    // free(placeFirstMov);
 
 }// end of expansion()
 
@@ -333,10 +339,11 @@ float
 Mcts::rollout(pNode currNode) 
 {
     time_t start = clock();
-    int turn = this->aiColor, vicChk = 0;
+    short turn = this->aiColor;
+    int vicChk = 0;
     unsigned seed = chrono::system_clock::now().time_since_epoch().count();
     vector<Move> availMoves;
-    srand(time(NULL));
+    // srand(time(NULL));
     short** boardToRoll = (short**)malloc(sizeof(short*) * BOARDSIZE);
     for (short i = 0; i < BOARDSIZE; i++) {
         boardToRoll[i] = (short*)malloc(sizeof(short) * BOARDSIZE);
@@ -360,7 +367,7 @@ Mcts::rollout(pNode currNode)
             free(boardToRoll);
             time_t end = clock(); 
             rollTime += (end - start) / double(CLOCKS_PER_SEC);
-            printf("rollout() won immediately\n");
+            // printf("rollout() won immediately\n");
             if(vicChk == this->aiColor) return ROLLWINVAL;
             else return ROLLLOSEVAL;
         }
