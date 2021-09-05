@@ -134,7 +134,7 @@ void
 aiPlayFirst ()
 {
     //TODO: run mcts that handlee first move
-    guiBoard[10][10] = aiColor;
+    guiBoard[9][9] = aiColor;
 }
 
 int 
@@ -227,7 +227,7 @@ runGUI()
     }
     else{ 
         aiPlayFirst();
-        printBoard();
+        // printBoard();
     }
 
     do{

@@ -29,32 +29,46 @@ todo:
 #include <chrono>
 
 #define MY_F6 9999
-#define MY_H6 5000
+#define MY_H6 9999
 
 #define MY_F5 10
 #define MY_H5 5
 
-#define MY_F4 50
-#define MY_H4 25
-#define MY_F3 10
-#define MY_H3 5
-#define MY_F2 20
-#define MY_H2 10
-#define MY_F1 5
-#define MY_H1 1
+#define MY_F4 200
+#define MY_H4 100
+#define MY_F3 70
+#define MY_H3 36
+#define MY_F2 50
+#define MY_H2 20
+#define MY_F1 10
+#define MY_H1 10
 
-#define OP_F6 999
-#define OP_H6 500
-#define OP_F5 200
-#define OP_H5 100
-#define OP_F4 200
-#define OP_H4 100
+// #define OP_F6 999
+// #define OP_H6 999 
+// #define OP_F5 25
+// #define OP_H5 20
+// #define OP_F4 25
+// #define OP_H4 20
 
-#define OP_F3 13
-#define OP_H3 7
-#define OP_F2 10
-#define OP_H2 4
-#define OP_F1 3
+// #define OP_F3 20
+// #define OP_H3 15
+// #define OP_F2 15
+// #define OP_H2 5
+// #define OP_F1 2
+// #define OP_H1 1
+
+#define OP_F6 600
+#define OP_H6 600
+#define OP_F5 600
+#define OP_H5 600
+#define OP_F4 600
+#define OP_H4 600
+
+#define OP_F3 20
+#define OP_H3 15
+#define OP_F2 15
+#define OP_H2 5
+#define OP_F1 2
 #define OP_H1 1
 
 using namespace std;
@@ -190,14 +204,14 @@ Mini::runGame(Move userMov1, Move userMov2)
     printf("tree root val: %d\n", treeRoot->value);
     this->expansion(treeRoot);
     printf("end of 1st expansion, nodecnt: %d\n", nodeCnt);
-    
+    /*
     vector<pNode> &iter = *(treeRoot->children);
     for (pNode child : iter) {
         this->expandChild(child);
         // printf("%d, %d and %d, %d scored: %d\n", child->movesLog[0].x, child->movesLog[0].y, child->movesLog[1].x, child->movesLog[1].y, child->value);
     }
     printf("end of 2st expansion nodecnt: %d\n", nodeCnt);
-    
+    */
     time_t endTime = clock();
     time = (endTime - startTime) / double(CLOCKS_PER_SEC);
     printf("%f sec\n\n", time);
@@ -257,7 +271,9 @@ Mini::expansion(pNode currNode)
     pNode tempNode = NULL;
     for (int i = 0; i < gridMoveSize; i++) {
         mov1 = oneGridAway[i]; 
+        // puts("");
         childScore1 = this->evalAccum1(board, mov1, this->aiColor);
+        // printf("--%d\n", board[mov1.y][mov1.x]);
         for (int j = i + 1; j < gridMoveSize; j++) {
             mov2 = oneGridAway[j];
             childScore2 = this->evalAccum1(board, mov2, this->aiColor);
@@ -472,7 +488,7 @@ Mini::evalOneRow(short type[BOARDSIZE], short count[BOARDSIZE])
         //TODO: gotta hadle red stone
     short currColor, currCnt = 1, gapCnt = 0, frontGap = 0;
     int looper = 0, score = 0;
-    bool blockedL = true, blockedR = false;
+    bool blockedL = true, blockedR = false, continued = true;
 
     currColor = type[looper];
     do{
@@ -484,7 +500,7 @@ Mini::evalOneRow(short type[BOARDSIZE], short count[BOARDSIZE])
                 if(type[tempLooper] == EMPTY){
                     gapCnt += count[tempLooper];
                     if(gapCnt < 3){ 
-                        blockedL = true;
+                        continued = false;
                         continue;
                     }
                     else if(count[tempLooper] > 1) ;
@@ -497,28 +513,33 @@ Mini::evalOneRow(short type[BOARDSIZE], short count[BOARDSIZE])
                 }
                 else blockedR = true;
 
+
                 looper = tempLooper - 1;
                 break;
             }
             // if(frontGap+ currCnt + gapCnt < 6) printf("%dDEAD ", frontGap + currCnt + gapCnt);
             // if(blockedR) printf("blockedR ");
             // if(blockedL) printf("blockedL ");
-            // printf("stone %d with %d count\n", currColor, currCnt);
+            // printf("stone %d --++ %d count, %d gapCnt, %d frontGap\n", currColor, currCnt, gapCnt, frontGap);
             
             if(frontGap + currCnt + gapCnt < 6) ;
             else{
                 currCnt *= 2;
                 if(blockedL || blockedR) currCnt--;
-                if(currColor == aiColor) 
-                    score += scoreMY[currCnt];
+                if(currColor == aiColor){
+                    if(currCnt > 10 && !continued) score += 0; //FIXME
+                    else score += scoreMY[currCnt];
+                }
                 else   
                     score -= scoreOP[currCnt];
             }
-            currCnt = 0; gapCnt = 0;
+            currCnt = 0; gapCnt = 0; 
+            frontGap = (type[looper] == EMPTY)? count[looper] : 0;
         }
         else if (currColor == EMPTY) frontGap = count[looper]; //FIXME, frontGap is tricky
 
         blockedL = blockedR; blockedR = false; //FIXME, |_0 blockedL uncatched
+        continued = true;
         currColor = type[++looper];
     }while(currColor != -1);
     return score;
@@ -759,7 +780,7 @@ Mini::evalAccum1(short board[][BOARDSIZE], Move mov, short inputStone)
 
         board[movy][movx] = inputStone;
     }
-    // printf("score before: %d, score after: %d\n", scoreBefore, score);
+    // printf("%2d %2d - score before: %d, score after: %d\n", movx, movy, scoreBefore, score);
     score -= scoreBefore;
     return score;
 }
