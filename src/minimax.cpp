@@ -30,10 +30,8 @@ todo:
 
 #define MY_F6 9999
 #define MY_H6 9999
-
 #define MY_F5 10
 #define MY_H5 5
-
 #define MY_F4 200
 #define MY_H4 100
 #define MY_F3 70
@@ -43,27 +41,12 @@ todo:
 #define MY_F1 10
 #define MY_H1 10
 
-// #define OP_F6 999
-// #define OP_H6 999 
-// #define OP_F5 25
-// #define OP_H5 20
-// #define OP_F4 25
-// #define OP_H4 20
-
-// #define OP_F3 20
-// #define OP_H3 15
-// #define OP_F2 15
-// #define OP_H2 5
-// #define OP_F1 2
-// #define OP_H1 1
-
 #define OP_F6 600
 #define OP_H6 600
 #define OP_F5 600
 #define OP_H5 600
 #define OP_F4 600
 #define OP_H4 600
-
 #define OP_F3 20
 #define OP_H3 15
 #define OP_F2 15
@@ -270,12 +253,14 @@ Mini::expansion(pNode currNode)
 
     pNode tempNode = NULL;
     for (int i = 0; i < gridMoveSize; i++) {
-        mov1 = oneGridAway[i]; 
+        mov1 = oneGridAway[i];
+        if(board[mov1.y][mov1.x]==OBSTACLE) { board[mov1.y][mov1.x] = EMPTY; continue; }
         // puts("");
         childScore1 = this->evalAccum1(board, mov1, this->aiColor);
         // printf("--%d\n", board[mov1.y][mov1.x]);
         for (int j = i + 1; j < gridMoveSize; j++) {
             mov2 = oneGridAway[j];
+            if(board[mov2.y][mov2.x]==OBSTACLE) { board[mov2.y][mov2.x] = EMPTY; continue; } 
             childScore2 = this->evalAccum1(board, mov2, this->aiColor);
             tempNode = createNode(child_color, currNode, mov1, mov2, currNode->value + childScore1 + childScore2);
             currNode->children->push_back(tempNode);
@@ -283,6 +268,7 @@ Mini::expansion(pNode currNode)
         }
         for (int j = 0; j < twoGridAwaySize; j++) {
             mov2 = twoGridAway[j];
+            if(board[mov2.y][mov2.x]==OBSTACLE) { board[mov2.y][mov2.x] = EMPTY; continue; } 
             childScore2 = this->evalAccum1(board, mov2, this->aiColor);
             tempNode = createNode(child_color, currNode, mov1, mov2, currNode->value + childScore1 + childScore2);
             currNode->children->push_back(tempNode);
