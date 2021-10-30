@@ -12,10 +12,13 @@ using namespace std;
 int main(){
     runGUI();
 
-/*    
-    Mini min = Mini();
-    short type[BOARDSIZE] = {0, 1, 0, -1}, count[BOARDSIZE] = {7, 4, 8, -1};
-    min.evalOneRow(type, count);
+    
+    // Mini min = Mini();
+    // min.aiColor = 2;
+    // short type[BOARDSIZE] = {0, 1, 2, 0, -1}, count[BOARDSIZE] = {4, 1, 4, 9, -1};
+    // printf("%d\n", min.evalOneRow(type, count));
+    // short type1[BOARDSIZE] = {0, 1, 2, 0, 2, 0, -1}, count1[BOARDSIZE] = {4, 1, 4, 2, 2, 5, -1};
+    // printf("%d\n", min.evalOneRow(type1, count1));
     
     /*
     short **board;

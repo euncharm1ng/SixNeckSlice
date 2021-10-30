@@ -134,7 +134,7 @@ void
 aiPlayFirst ()
 {
     //TODO: run mcts that handlee first move
-    guiBoard[10][10] = aiColor;
+    guiBoard[9][9] = aiColor;
 }
 
 int 
@@ -224,7 +224,7 @@ runGUI()
     }
     else{ 
         aiPlayFirst();
-        printBoard();
+        // printBoard();
     }
 
     do{
@@ -250,12 +250,14 @@ runDahunGUI(void*)
 	ContextSettings s;
 	s.antialiasingLevel = 8;
 	RenderWindow window(VideoMode(cell_size * 19, cell_size * 19), "SNS", Style::Default, s);
-	CircleShape blackStone(1.0 * cell_size / 2), whiteStone(1.0 * cell_size / 2), redStone(1.0 * cell_size / 2);
+	CircleShape blackStone(1.0 * cell_size / 2), whiteStone(1.0 * cell_size / 2), obstacleStone(1.0 * cell_size / 2); // bs : Black Stone , ws : White Stone
 
 	blackStone.setFillColor(Color::Black);
 	blackStone.setOutlineColor(Color::Black);
 	whiteStone.setFillColor(Color::White);
 	whiteStone.setOutlineColor(Color::Black);
+	obstacleStone.setFillColor(Color::Red);
+	obstacleStone.setOutlineColor(Color::Red);
 	whiteStone.setOutlineThickness(-2);
 	redStone.setFillColor(Color::Red);
 	redStone.setOutlineColor(Color::Red);
@@ -314,8 +316,8 @@ runDahunGUI(void*)
 				}
 				else if (guiBoard[y][x] == OBSTACLE)
 				{
-					redStone.setPosition(x * cell_size, y * cell_size);
-					window.draw(redStone);
+					obstacleStone.setPosition(x * cell_size, y * cell_size);
+					window.draw(obstacleStone);
 				}
 			}
 		}
@@ -372,4 +374,3 @@ runDahunGUI(void*)
 		// pthread_mutex_unlock(&lock);
 	}
 }
-*/
