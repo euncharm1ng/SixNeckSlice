@@ -19,11 +19,7 @@ short aiColor, userColor;
 // Mcts m;
 Mini m;
 pthread_t freer, GUIRunner;
-<<<<<<< HEAD
-pthread_mutex_t mlock = PTHREAD_MUTEX_INITIALIZER;
-=======
 pthread_mutex_t mylock = PTHREAD_MUTEX_INITIALIZER;
->>>>>>> 70689978b6741010287f45998f2789780c8bd55f
 pthread_cond_t wakegui = PTHREAD_COND_INITIALIZER;
 pthread_cond_t wakeai = PTHREAD_COND_INITIALIZER;
 int receiveFromGui = 0;
@@ -187,33 +183,16 @@ receiveUserInput ()
 void 
 GUIuserPlayFirst()
 {
-<<<<<<< HEAD
-	pthread_mutex_lock(&mlock);
-	pthread_cond_signal(&wakegui);
-	pthread_cond_wait(&wakeai, &mlock);
-	pthread_mutex_unlock(&mlock);
-=======
 	// pthread_mutex_lock(&lock);
 	// pthread_cond_signal(&wakegui);
 	// pthread_cond_wait(&wakeai, &lock);
 	// pthread_mutex_unlock(&lock);
 	post();
->>>>>>> 70689978b6741010287f45998f2789780c8bd55f
 }
 
 int
 GUIreceiveUserInput()
 {
-<<<<<<< HEAD
-	pthread_mutex_lock(&mlock);
-	pthread_cond_signal(&wakegui);
-	pthread_cond_wait(&wakeai, &mlock);
-
-	pthread_cond_signal(&wakegui);
-	pthread_cond_wait(&wakeai, &mlock);
-	
-	pthread_mutex_unlock(&mlock);
-=======
 	// pthread_mutex_lock(&lock);
 	// pthread_cond_signal(&wakegui);
 	// pthread_cond_wait(&wakeai, &lock);
@@ -223,7 +202,6 @@ GUIreceiveUserInput()
 	
 	// pthread_mutex_unlock(&lock);
 	post(); post();
->>>>>>> 70689978b6741010287f45998f2789780c8bd55f
 
 	if (m.chkVic(guiBoard, mov1, mov2))
         return 1;
@@ -261,13 +239,9 @@ runGUI()
 	draw();
 	system("pause");
 }
-<<<<<<< HEAD
-/*
-=======
 
 
 
->>>>>>> 70689978b6741010287f45998f2789780c8bd55f
 void*
 runDahunGUI(void*)
 {
@@ -352,21 +326,11 @@ runDahunGUI(void*)
 	window.display();
 
 	while(1){
-<<<<<<< HEAD
-		pthread_mutex_lock(&mlock);
-		pthread_cond_wait(&wakegui, &mlock);
-		
-		while (window.isOpen())
-		{
-			Event e;
-			if (window.pollEvent(e))
-=======
 		// pthread_mutex_lock(&lock);
 		// pthread_cond_wait(&wakegui, &lock);
 		if(try_wait()){
 			draw_stones();
 			while(window.isOpen())
->>>>>>> 70689978b6741010287f45998f2789780c8bd55f
 			{
 				Event e;
 				if (window.pollEvent(e))
@@ -398,26 +362,14 @@ runDahunGUI(void*)
 						draw_stones();
 						break;
 					}
-<<<<<<< HEAD
-				
-					draw_stones();
-					break;
-=======
->>>>>>> 70689978b6741010287f45998f2789780c8bd55f
 				}
 				draw_stones();
 			}
 			pthread_cond_signal(&wakeai);
 		}
-<<<<<<< HEAD
-		puts("signaling ai");
-		pthread_cond_signal(&wakeai);
-		pthread_mutex_unlock(&mlock);
-=======
 		// puts("signaling ai");
 		// pthread_cond_signal(&wakeai);
 		// pthread_mutex_unlock(&lock);
->>>>>>> 70689978b6741010287f45998f2789780c8bd55f
 	}
 }
 */
