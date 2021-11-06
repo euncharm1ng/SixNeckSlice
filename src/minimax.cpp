@@ -13,7 +13,7 @@ todo:
 
 */
 
-#include "minimax.h"
+#include "../include/minimax.h"
 #include <algorithm> 
 #include <vector>
 #include <string.h>

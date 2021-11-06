@@ -1,173 +1,176 @@
-#include "minimax.h"
 #include <iostream>
 #include <pthread.h>
+#include <string.h>
+#include "../include/minimax.h"
+#include "../include/connsix.h"
+#include "../include/adaptor.hpp"
 
 using namespace std;
 
-int cell_size = 30;
-
 int freeCount;
-short** guiBoard;
-short aiColor, userColor;
+short** adaptor_board;
+short home_color, away_color;
+char *home_buffer = (char*)malloc(sizeof(char) * 8);
 
-Mini m;
+Mini home_ai;
 pthread_t freer;
 Move mov1, mov2;
 
 
-
-void 
-initGUI ()
+void
+ctoi(char *stone, int *i, int *j)
 {
-    guiBoard = (short**)malloc(sizeof(short*) * BOARDSIZE);
-    for (int i = 0; i < BOARDSIZE; i++) {
-        guiBoard[i] = (short*)malloc(sizeof(short) * BOARDSIZE);
-        for (int j = 0; j < BOARDSIZE; j++) guiBoard[i][j] = 0;
-    }
-    userColor = -1;
-    do {
-        printf("Choose your color (BLACK is '1', WHITE is '2'): ");
-        scanf("%hd", &userColor);
-    }while(userColor < 0 && userColor > 3);
-    aiColor = (userColor == BLACK) ? WHITE : BLACK;
-    printf("Then AiColor is %hd\n", aiColor);
-    setRedStone();
-
-    // m = Mcts(guiBoard, aiColor);
-	m = Mini(guiBoard, aiColor);
-	mov1.x = mov1.y = mov2.x = mov2.y = 0;
+    char a;
+    sscanf(stone, "%c%2d", &a, i);
+    if(a >= 'A' && a <= 'H') *j = a - 'A';
+    else *j = a - 'A' - 1;
+    *i = 19 - *i;
 }
 
-void 
-setRedStone()
+char*
+itoc(char *stone, int i, int j)
 {
-    int redCnt = 0;
-    Move redStone;
-    printf("input the number of red stone to place: ");
-    scanf("%d", &redCnt);
-    for(int i =0; i< redCnt; i++){
-        printf("%dth red stone: ", i);
-        scanf("%hd %hd", &redStone.x, &redStone.y);
-        if(!chkBoundary(redStone)) 
-            i--;
-        else 
-            placeStone(redStone, OBSTACLE);
-    }
-}
-
-int 
-chkBoundary (Move inputMove)
-{
-    if(inputMove.x > -1 && inputMove.x < 19 && inputMove.y > -1 && inputMove.y < 19){
-        if(guiBoard[inputMove.y][inputMove.x] == 0) return 1;
-    }
-    printf("invalid input: %d, %d; please retry\n", inputMove.x, inputMove.y);
-    return 0;
+    char a = 'A' + j;
+    if(j > 7) a++;
+    stone[0] = a;
+    sprintf(stone, "%c%02d\0", a, 19-i);
+    return stone;
 }
 
 int
-placeStone (Move inputMove, short inputColor)
+place_move (int x, int y, short inputColor)
 {
-    if(guiBoard[inputMove.y][inputMove.x] != 0) return -1;
-    guiBoard[inputMove.y][inputMove.x] = inputColor;
+    if(adaptor_board[y][x] != 0) return -1;
+    adaptor_board[y][x] = inputColor;
     return 1;
 }
 
 void 
-printBoard()
+print_board()
 {
     puts("y\\x 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8");
     for (int i = 0; i < 19; i++) {
         printf("  %d ", i%10);
         for (int j = 0; j < 19; j++) {
-            if (guiBoard[i][j] == BLACK) printf(CYAN "o " NORM);
-            else if (guiBoard[i][j] == WHITE) printf("o ");
-            else if (guiBoard[i][j] == OBSTACLE) printf(RED "o " NORM);
+            if (adaptor_board[i][j] == BLACK) printf(CYAN "o " NORM);
+            else if (adaptor_board[i][j] == WHITE) printf("o ");
+            else if (adaptor_board[i][j] == OBSTACLE) printf(RED "o " NORM);
             else printf(YELLOW "+ " NORM);
         }
         printf("\n");
     }
 }
 
-void
-aiPlayFirst ()
+char* 
+ai_draw() 
 {
-    guiBoard[9][9] = aiColor;
-}
+    char* temp = (char*)malloc(sizeof(char) * 4);
+    pNode result = home_ai.runGame(mov1, mov2);
+    place_move(result->movesLog[0].x, result->movesLog[0].y, home_color);
+    place_move(result->movesLog[1].x, result->movesLog[1].y, home_color);
 
-int 
-aiPlays() 
-{
-    pNode result = m.runGame(mov1, mov2);
-    placeStone(result->movesLog[0], aiColor);
-    placeStone(result->movesLog[1], aiColor);
-
-    int chkWin = m.chkVic(guiBoard, result->movesLog[0], result->movesLog[1]);
+    //int chkWin = home_ai.chkVic(guiBoard, result->movesLog[0], result->movesLog[1]);
 	printf("x1: %2d y1: %2d\nx2: %2d y2: %2d\n\n", result->movesLog[0].x, result->movesLog[0].y, result->movesLog[1].x, result->movesLog[1].y);
-    pthread_create(&freer, NULL, freeAll, m.root);
+    pthread_create(&freer, NULL, freeAll, home_ai.root);
 	pthread_detach(freer);
 
-    m.setRoot(aiColor);
+    home_ai.setRoot(home_color);
+
+    home_buffer[0] = 0;
+    strcat(home_buffer, itoc(temp, result->movesLog[0].y, result->movesLog[0].x));
+    strcat(home_buffer, ":");
+    strcat(home_buffer, itoc(temp, result->movesLog[1].y, result->movesLog[1].x));
+
+    free(temp);
 	
-    return chkWin;    
+    //return chkWin;    
+    return home_buffer;
 }
+
+int
+draw_away_move(char *away_draw)
+{
+    int i, j;
+    if(strcmp(away_draw, "WIN") == 0 || strcmp(away_draw, "LOSE") == 0 || strcmp(away_draw, "TIE") == 0) return 0;
+    ctoi(away_draw, &i, &j);
+    //adaptor_board[i][j] = away_color;
+    place_move(j, i, away_color);
+    ctoi(&away_draw[4], &i, &j);
+    place_move(j, i, away_color);
+    //adaptor_board[i][j] = away_color;
+    return 1;
+}
+
+
+int
+set_red(char *redstones)
+{
+    if(redstones == NULL)
+        { perror("red stone error\n"); exit(1); }
+    int i, j;
+    char *stone = strtok(redstones, ":");
+    while(stone != NULL){
+        ctoi(stone, &i, &j);
+        adaptor_board[i][j] = OBSTACLE;
+        stone = strtok(NULL, ":");
+    }
+}
+    
+void
+init_api()
+{
+    char ip[20], color[10] ;
+	int port = 0 ;
+	
+	printf("Enter ip: ") ;
+	scanf("%s", ip) ;
+	printf("Enter port number: ") ;
+	scanf("%d", &port) ;
+	printf("Enter player color: ") ;
+	scanf("%s", color) ;
+
+    adaptor_board = (short**)malloc(sizeof(short*) * BOARDSIZE);
+    for(int i = 0; i < BOARDSIZE; i++){
+        adaptor_board[i] = (short*)malloc(sizeof(short) * BOARDSIZE);
+        memset(adaptor_board[i], 0, sizeof(short) * BOARDSIZE);
+    }
+    if(strcmp(color, "black") == 0)
+        { home_color = BLACK; away_color = WHITE; }
+    else
+        { home_color = WHITE; away_color = BLACK; }
+
+    set_red(lets_connect(ip, port, color));
+    print_board();
+
+	home_ai = Mini(adaptor_board, home_color);
+	mov1.x = mov1.y = mov2.x = mov2.y = 0;
+}
+
 
 void 
-userPlayFirst()
+run_game()
 {
-    do{
-        printf("input the first move: ");
-        scanf("%hd %hd", &mov1.x, &mov1.y);
-    }while(!chkBoundary(mov1));
-    placeStone(mov1, userColor);
-}
+    char *away_draw;
+    init_api();
 
-int 
-receiveUserInput ()
-{
-    printBoard();
-    do{
-        printf("input the first move: ");
-        scanf("%hd %hd", &mov1.x, &mov1.y);
-        printf("input the second move: ");
-        scanf("%hd %hd", &mov2.x, &mov2.y);
-    }while(!chkBoundary(mov1) && !chkBoundary(mov2));
-    printf("placing stones: \n");
-    placeStone(mov1, userColor);
-    placeStone(mov2, userColor);
+    if(home_color == BLACK)
+        { adaptor_board[9][9] = home_color; away_draw = draw_and_read("K10"); }
+    else 
+        away_draw = draw_and_read("");
 
-    if (m.chkVic(guiBoard, mov1, mov2))
-        return 1;
-    else return 0;
-}
+	if (away_draw == NULL) 
+        { perror("draw and read error\n"); exit(1); }
+    else if (strcmp(away_draw, "K10") == 0)
+        adaptor_board[9][9] = away_color;
+    else
+        draw_away_move(away_draw);
 
-
-
-void 
-runGUI()
-{
-	initGUI();
-
-	//set connection
-	//first draw as BLACK OR WHITE
-	
-    if(userColor == BLACK){
-        // userPlayFirst();
-        aiPlays();
-    }
-    else{ 
-        aiPlayFirst();
-        // printBoard();
-    }
+	printf("Read %s from server.\n", away_draw) ;
+    print_board();
 
     do{
-		//minimax -> server -> minimax
-        if(receiveUserInput()){
-            puts("user wins");
-            break;
-        }
-    }while(aiPlays() == 0);
-    // printBoard();
+        away_draw = draw_and_read(ai_draw());
+    }while(draw_away_move(away_draw));
+
     puts("end of game");
-	system("pause");
 }
