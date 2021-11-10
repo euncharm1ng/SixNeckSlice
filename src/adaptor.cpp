@@ -119,11 +119,11 @@ set_red(char *redstones)
 void
 init_api()
 {
-    char ip[20], color[10] ;
+    char ip[20] = "127.0.0.1", color[10] ;
 	int port = 0 ;
 	
-	printf("Enter ip: ") ;
-	scanf("%s", ip) ;
+	//printf("Enter ip: ") ;
+	//scanf("%s", ip) ;
 	printf("Enter port number: ") ;
 	scanf("%d", &port) ;
 	printf("Enter player color: ") ;
