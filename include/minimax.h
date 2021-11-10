@@ -46,15 +46,15 @@ void freeNode(pNode paraNode);
 class Mini{
     void expansion(pNode currnode);
 
-    // void findMoves(pNode currNode, vector<Move>& oneGridAway, vector<Move>& availMoves, short board[][BOARDSIZE]);
+    void findMoves(pNode currNode, vector<Move>& oneGridAway, vector<Move>& availMoves, short board[][BOARDSIZE]);
     
-    // void findMovesOneGrid(short board[][BOARDSIZE], vector<Move>& moveVec, int tagToAvoid);
+    void findMovesOneGrid(short board[][BOARDSIZE], vector<Move>& moveVec, int tagToAvoid);
     
     void expandChild(pNode currNode); // make children from top
 
     pNode select(pNode root);
     
-    // bool chkPossible(short** board, Move mov1);
+    bool chkPossible(short** board, Move mov1);
 
     public:
         short** board;
@@ -69,12 +69,12 @@ class Mini{
         
         void setRoot(short paraAiColor);
         
-        // int evalRoot(short** board);
+        int evalRoot(short** board);
 
         int evalOneRow(short* type, short* count);
 
         /* evaluate the node's board with accumulated val*/
-        // int evalAccum1(short board[][BOARDSIZE], Move mov, short inputStone);
+        int evalAccum1(short board[][BOARDSIZE], Move mov, short inputStone);
 
         /*
         * checks the board according to the mov1 and mov2, return 1 or 2 if 

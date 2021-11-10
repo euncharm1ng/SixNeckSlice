@@ -184,7 +184,6 @@ Mini::runGame(Move userMov1, Move userMov2) // 수정필요
     // unsigned seed = chrono::system_clock::now().time_since_epoch().count();
     // float time = 0;
     pNode treeRoot = this->root;
-
     //treeRoot->value = this->evalRoot(this->board);
     //printf("tree root val: %d\n", treeRoot->value);
     this->expansion(treeRoot);
