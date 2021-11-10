@@ -126,7 +126,7 @@ freeNode(pNode paraNode)
     delete paraNode->children;
     free(paraNode);
 }
-
+/*
 void 
 write(pNode root, short** board, pNode result){
     file.open("test.txt", std::ofstream::out | std::ofstream::app);
@@ -157,7 +157,7 @@ write(pNode root, short** board, pNode result){
     }
     file.close();
 }
-
+*/
 /*---------- class minimax ----------*/
 
 Mini::Mini(){}
@@ -176,17 +176,17 @@ Mini::setRoot(short paraAiColor)
 }
 
 pNode 
-Mini::runGame(Move userMov1, Move userMov2) 
+Mini::runGame(Move userMov1, Move userMov2) // 수정필요
 {
-    time_t startTime = clock();
-    unsigned seed = chrono::system_clock::now().time_since_epoch().count();
-    float time = 0;
+    // time_t startTime = clock();
+    // unsigned seed = chrono::system_clock::now().time_since_epoch().count();
+    // float time = 0;
     pNode treeRoot = this->root;
 
-    treeRoot->value = this->evalRoot(this->board);
-    printf("tree root val: %d\n", treeRoot->value);
+    //treeRoot->value = this->evalRoot(this->board);
+    //printf("tree root val: %d\n", treeRoot->value);
     this->expansion(treeRoot);
-    printf("end of 1st expansion, nodecnt: %d\n", nodeCnt);
+    //printf("end of 1st expansion, nodecnt: %d\n", nodeCnt);
     /*
     vector<pNode> &iter = *(treeRoot->children);
     for (pNode child : iter) {
@@ -195,12 +195,12 @@ Mini::runGame(Move userMov1, Move userMov2)
     }
     printf("end of 2st expansion nodecnt: %d\n", nodeCnt);
     */
-    time_t endTime = clock();
-    time = (endTime - startTime) / double(CLOCKS_PER_SEC);
-    printf("%f sec\n\n", time);
-    nodeCnt = 0;
+    //time_t endTime = clock();
+    //time = (endTime - startTime) / double(CLOCKS_PER_SEC);
+    //printf("%f sec\n\n", time);
+    //nodeCnt = 0;
     pNode result = select(treeRoot);
-    write(treeRoot, this->board, result);
+    //write(treeRoot, this->board, result);
     return result;
 }// end of runGame()
 
@@ -222,6 +222,15 @@ Mini::select(pNode root)
 void 
 Mini::expansion(pNode currNode)
 {
+    //recursive
+    /*
+    if(depth==3) return;
+    expandChild()
+    iter
+    for() {
+        expansion();
+    }
+    */
     short child_color = (currNode->color == BLACK) ? WHITE : BLACK;
     int gridMoveSize, availMoveSize, twoGridAwaySize, childScore1, childScore2;
     Move mov1, mov2;
