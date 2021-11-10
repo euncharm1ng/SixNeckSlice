@@ -24,95 +24,47 @@ using namespace std;
 
 typedef struct Move {
     short x, y;
-    inline bool operator==(const Move lhs);
+    //inline bool operator==(const Move lhs);
 }Move;
 typedef Move* pMove;
 
 typedef struct Node {
-    short color, moveSize; //the color to place to the board that yet not placed
-    int value;
-    vector<Node*> *children;
-    Node* parent;
-    pMove movesLog;
+    Move mv1, mv2;
 } Node;
 typedef Node* pNode;
 
 
-pNode createNode(short paraColor);
-pNode createNode(short paraColor, pNode paraParent, Move mov1, Move mov2, int toAccumulate);
-void* freeAll (void* inputNode);
-void freeNode(pNode paraNode);
-
 class Mini{
-    void expansion(pNode currnode);
+    short** board;
+    pNode root;
+    short home_color;
 
-    void findMoves(pNode currNode, vector<Move>& oneGridAway, vector<Move>& availMoves, short board[][BOARDSIZE]);
+    Mini();
+    Mini(short paraAiColor);
+
+    int expansion();
+    pNode expand_root();
+    void mv1_top(pMove mvs, int legnth, int color);
+    void mv2_top(pMove mvs, int length, int color);
+
+    //void expandChild(pNode currNode); // make children from top
+
     
-    void findMovesOneGrid(short board[][BOARDSIZE], vector<Move>& moveVec, int tagToAvoid);
+
+    pNode run_mini(Move away_move1, Move away_move2);
     
-    void expandChild(pNode currNode); // make children from top
-
-    pNode select(pNode root);
+    //void setRoot(short paraAiColor);
     
-    bool chkPossible(short** board, Move mov1);
+    // int evalRoot(short** board);
 
-    public:
-        short** board;
-        pNode root;
-        short aiColor;
-        
-        Mini();
+    int evalOneRow(short* type, short* count);
 
-        Mini(short** paraBoard, short paraAiColor);
+    /* evaluate the node's board with accumulated val*/
+    // int evalAccum1(short board[][BOARDSIZE], Move mov, short inputStone);
 
-        pNode runGame(Move userMov1, Move userMov2);
-        
-        void setRoot(short paraAiColor);
-        
-        int evalRoot(short** board);
-
-        int evalOneRow(short* type, short* count);
-
-        /* evaluate the node's board with accumulated val*/
-        int evalAccum1(short board[][BOARDSIZE], Move mov, short inputStone);
-
-        /*
-        * checks the board according to the mov1 and mov2, return 1 or 2 if 
-        * the user with the color wins, else return 0 for no winner found.
-        */
-        int chkVic(short** board,Move mov1, Move mov2);
+    /*
+    * checks the board according to the mov1 and mov2, return 1 or 2 if 
+    * the user with the color wins, else return 0 for no winner found.
+    */
+    //int chkVic(short** board,Move mov1, Move mov2);
 };
-
-
-/*---------- gui.cpp ----------*/
-
-void initGUI();
-
-void aiPlayFirst();
-
-/* 
-* return 1 for valid input, 0 for invalid input and prints an error message 
-*/
-int chkBoundary(Move inputMove);
-
-void userPlayFirst();
-
-/*
-* return 1 on success, return -1 for placing stone in occupied location
-* the boundary (-1 < x < 19) has to be checked first
-*/
-int placeStone (Move inputMove, short inputColor);
-
-/* return 1 if user wins, 0 for continue the game */
-int receiveUserInput ();
-
-void printBoard();
-
-/* ai makes its move; run and return result from chkVin() from mcts.c */
-int aiPlays() ;
-
-void runGUI();
-
-void setRedStone();
-
-void* runDahunGUI(void*);
