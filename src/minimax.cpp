@@ -13,20 +13,21 @@ todo:
 
 */
 
-#include "minimax.h"
-#include <stdlib.h>
-#include <time.h>
+#include "../include/minimax.h"
 #include <algorithm> 
 #include <vector>
-#include <string>
-#include <stdio.h>
-#include <cmath>
 #include <string.h>
-#include <ctime>
 #include <iostream>
 #include <fstream>
-#include <random>
 #include <chrono>
+#include "../include/connsix.h"
+//#include <ctime>
+//#include <string>
+//#include <cmath>
+//#include <stdlib.h>
+//#include <random>
+//#include <stdio.h>
+//#include <time.h>
 
 #define MY_F6 9999
 #define MY_H6 9999
@@ -128,7 +129,8 @@ freeNode(pNode paraNode)
 }
 /*
 void 
-write(pNode root, short** board, pNode result){
+write(pNode root, short** board, pNode result)
+{
     file.open("test.txt", std::ofstream::out | std::ofstream::app);
     if(file.is_open()){
         file << "\nwith the board being : \n";
